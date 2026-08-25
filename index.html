@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Rincian Actual Cost</title>
+    <!-- Tailwind CSS CDN untuk styling ringkas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 CDN untuk kalkulasi reaktif otomatis -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Google Fonts Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        /* Glassmorphism card */
+        .glass-card {
+            background: rgba(18, 18, 22, 0.45);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.02), 0 20px 50px rgba(0, 0, 0, 0.6);
+        }
+        /* Floating animation */
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1.5deg); }
+        }
+        .animate-float {
+            animation: float-slow 10s ease-in-out infinite;
+        }
+        .column-resizer {
+            transition: border-color 0.15s;
+        }
+        .column-resizer:hover {
+            border-right: 2px solid #3b82f6 !important;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-gray-800 text-xs">
+
+    <div id="app" :class="isLoggedIn ? 'bg-gray-100 p-4 min-h-screen' : 'bg-[#030307] min-h-screen relative overflow-hidden flex items-center justify-center'" style="width: 100%;">
+
+        <!-- Halaman Login -->
+        <div v-if="!isLoggedIn" class="w-full min-h-screen flex items-center justify-center relative overflow-hidden select-none bg-cover bg-center bg-no-repeat" style="background-image: url('Background.png');">
+
+            <!-- Circular Glass Login Form -->
+            <div class="glass-card animate-float rounded-full flex flex-col justify-center items-center p-8 relative z-10 text-white select-none shadow-2xl" style="width: min(92vw, 430px); height: min(92vw, 430px);">
+                <!-- Internal Glow spheres for smooth glass color reflections -->
+                <div class="absolute top-1/4 left-1/3 w-[220px] h-[220px] bg-teal-500/10 rounded-full blur-[65px] pointer-events-none"></div>
+                <div class="absolute bottom-1/4 right-1/3 w-[220px] h-[220px] bg-fuchsia-500/10 rounded-full blur-[65px] pointer-events-none"></div>
+
+                <div class="w-full max-w-[280px] flex flex-col items-center">
+                    <!-- Title -->
+                    <h2 class="text-white text-[22px] font-medium tracking-[0.2em] mb-7 mt-2 text-center">LOGIN</h2>
+
+                    <form @submit.prevent="login" class="w-full flex flex-col items-center">
+                        <!-- Error Message -->
+                        <div v-if="loginError" class="w-full text-red-400 text-[10px] text-center mb-3 bg-red-950/40 border border-red-500/20 py-1 px-2 rounded">
+                            {{ loginError }}
+                        </div>
+
+                        <!-- Username Input -->
+                        <div class="relative w-full mb-4">
+                            <input type="text" v-model="loginUsername" placeholder="Username" required
+                                class="w-full bg-white/[0.04] border border-white/10 hover:border-white/20 focus:border-teal-500/40 focus:bg-white/[0.08] rounded-xl py-2.5 px-4 pr-10 text-white placeholder-white/30 focus:outline-none transition-all duration-300 text-[12px] tracking-wide">
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/50">
+                                <svg class="w-4 h-4 text-white/70" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                </svg>
+                            </span>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="relative w-full mb-6">
+                            <input type="password" v-model="loginPassword" placeholder="**********" required
+                                class="w-full bg-white/[0.04] border border-white/10 hover:border-white/20 focus:border-teal-500/40 focus:bg-white/[0.08] rounded-xl py-2.5 px-4 pr-10 text-white placeholder-white/30 focus:outline-none transition-all duration-300 text-[12px] tracking-wide">
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/50">
+                                <svg class="w-4 h-4 text-white/70" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                                </svg>
+                            </span>
+                        </div>
+
+                        <!-- Login Button -->
+                        <button type="submit"
+                            class="w-[120px] bg-black/50 hover:bg-black/80 text-white border border-white/20 hover:border-teal-500/50 py-2 rounded-xl text-[11px] font-medium tracking-[0.15em] transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.3)] active:scale-95 mb-6 cursor-pointer text-center">
+                            LOGIN
+                        </button>
+                    </form>
+
+                    <!-- Links -->
+                    <div class="w-full flex justify-between items-center px-1 text-[10px] text-white/50">
+                        <label class="flex items-center gap-1.5 cursor-pointer hover:text-white transition-all select-none">
+                            <input type="checkbox" v-model="rememberMe" class="rounded bg-white/10 border-white/20 accent-teal-500 w-3.5 h-3.5 cursor-pointer">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="#" @click.prevent="alert('Silakan hubungi administrator IT untuk mereset kata sandi.')" class="hover:text-white hover:underline transition-all">Forgot password?</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Kalkulator -->
+        <div v-else class="max-w-[1600px] mx-auto bg-white p-5 rounded-lg shadow border border-gray-200">
+
+            <!-- Header Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-yellow-50 p-4 rounded border border-yellow-200">
+                <div class="space-y-2">
+                    <div class="flex items-center">
+                        <label class="w-36 font-semibold">Unit / Project Name:</label>
+                        <input v-model="project.name" class="border px-2 py-1 rounded w-64 bg-white"
+                            placeholder="Contoh: SHAFT">
+                    </div>
+                    <div class="flex items-center">
+                        <label class="w-36 font-semibold">Company:</label>
+                        <input v-model="project.company" class="border px-2 py-1 rounded w-64 bg-white"
+                            placeholder="Nama Perusahaan">
+                    </div>
+                    <div class="flex items-center">
+                        <label class="w-36 font-semibold">Penanggung Jawab:</label>
+                        <input v-model="project.pic" class="border px-2 py-1 rounded w-64 bg-white" placeholder="Nama PIC">
+                    </div>
+                </div>
+                <div class="flex flex-col justify-between items-end">
+                    <button @click="logout" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1.5 rounded transition-all flex items-center gap-1.5 shadow mb-2 text-[10px] no-print">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Keluar / Logout
+                    </button>
+                    <div class="flex items-center bg-white p-2 rounded border border-yellow-300">
+                        <label class="font-bold mr-3 text-sm">Biaya Tenaga Kerja / Jam:</label>
+                        <span class="font-semibold mr-1">Rp</span>
+                        <input type="number" v-model.number="laborRatePerHour"
+                            class="border px-2 py-1 rounded w-32 font-bold text-right text-blue-700">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto border border-gray-300 rounded mb-4">
+                <table class="min-w-full text-left border-collapse">
+                    <!-- Header Kolom Bertingkat -->
+                    <thead>
+                        <tr class="bg-gray-800 text-white text-[11px] text-center">
+                            <th rowspan="2" class="p-2 border border-gray-600 min-w-[200px]">Aktivitas (Komponen)</th>
+                            <th rowspan="2" class="p-2 border border-gray-600 min-w-[140px]">Detail Pekerjaan</th>
+                            <th colspan="7" class="p-2 border border-gray-600 bg-green-800">Biaya Material</th>
+                            <th colspan="7" class="p-2 border border-gray-600 bg-blue-800">Biaya Tenaga Kerja & Mesin</th>
+                            <th rowspan="2" class="p-2 border border-gray-600 min-w-[100px] bg-indigo-900">Total per Proses
+                            </th>
+                            <th rowspan="2" class="p-2 border border-gray-600 w-16 bg-purple-900">Qty Item</th>
+                            <th colspan="3" class="p-2 border border-gray-600 bg-yellow-800">Jumlah Biaya Total</th>
+                            <th rowspan="2" class="p-2 border border-gray-600 min-w-[120px] bg-emerald-900">JUMLAH (Rp)</th>
+                            <th rowspan="2" class="p-2 border border-gray-600 w-12 no-print">Aksi</th>
+                        </tr>
+                        <tr class="bg-gray-700 text-white text-[10px] text-center">
+                            <!-- Sub Material -->
+                            <th class="p-1 border border-gray-600">MID</th>
+                            <th class="p-1 border border-gray-600 w-14">Qty</th>
+                            <th class="p-1 border border-gray-600 w-14">Satuan</th>
+                            <th class="p-1 border border-gray-600 min-w-[120px]">Nama Material</th>
+                            <th class="p-1 border border-gray-600 min-w-[80px]">Harga Satuan</th>
+                            <th class="p-1 border border-gray-600 w-12">RF.M</th>
+                            <th class="p-1 border border-gray-600 min-w-[90px]">Biaya Material</th>
+                            <!-- Sub Tenaga Kerja & Mesin -->
+                            <th class="p-1 border border-gray-600 w-12">MP</th>
+                            <th class="p-1 border border-gray-600 w-14">Durasi (Jam)</th>
+                            <th class="p-1 border border-gray-600 w-12">RF.O</th>
+                            <th class="p-1 border border-gray-600 min-w-[80px]">Biaya Mesin/Jam</th>
+                            <th class="p-1 border border-gray-600 min-w-[80px]">Biaya Mesin</th>
+                            <th class="p-1 border border-gray-600 min-w-[80px]">Biaya Naker</th>
+                            <th class="p-1 border border-gray-600 min-w-[80px]">Operasional Mesin</th>
+                            <!-- Total Summary Item -->
+                            <th class="p-1 border border-gray-600 min-w-[80px]">Total Material</th>
+                            <th class="p-1 border border-gray-600 min-w-[80px]">Total Naker</th>
+                            <th class="p-1 border border-gray-600 min-w-[80px]">Total Mesin</th>
+                        </tr>
+                    </thead>
+
+                    <!-- Body Data -->
+                    <tbody>
+                        <template v-for="(item, itemIndex) in items" :key="item.id">
+                            <tr v-for="(row, rowIndex) in item.processes" :key="row.id"
+                                class="hover:bg-gray-50 text-[11px]">
+
+                                <!-- Kolom Aktivitas (Merged Rowspan) -->
+                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
+                                    class="p-2 border border-gray-300 align-top bg-yellow-50/50">
+                                    <input v-model="item.name"
+                                        class="w-full font-bold border-b border-gray-300 focus:outline-none mb-1 bg-transparent"
+                                        placeholder="Nama Komponen">
+                                    <textarea v-model="item.notes"
+                                        class="w-full text-[10px] text-gray-500 border rounded p-1" rows="2"
+                                        placeholder="Catatan/Deskripsi"></textarea>
+                                    <button @click="addProcess(itemIndex)"
+                                        class="mt-2 text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded w-full">+
+                                        Tambah Proses</button>
+                                </td>
+
+                                <!-- Detail Pekerjaan -->
+                                <td class="p-1 border border-gray-300">
+                                    <div class="flex flex-col gap-1">
+                                        <input v-model="row.detail" class="w-full border px-1 py-0.5 rounded text-[11px]"
+                                            placeholder="Pekerjaan">
+                                        <select @change="selectMachineTemplate($event, row)" class="w-full border px-1 py-0.5 rounded bg-gray-50 text-[10px] text-gray-600 focus:outline-none focus:border-blue-400 no-print">
+                                            <option value="">-- Pilih Mesin --</option>
+                                            <option v-for="m in machines" :key="m.name" :value="m.name">
+                                                {{ m.name }} (Rp {{ formatNumber(m.rate) }})
+                                            </option>
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <!-- Material Columns -->
+                                <td class="p-1 border border-gray-300"><input v-model="row.supplier"
+                                        class="w-full border px-1 py-0.5 rounded text-center text-[11px]" placeholder="MID"></td>
+                                <td class="p-1 border border-gray-300"><input type="number" v-model.number="row.matQty"
+                                        class="w-full border px-1 py-0.5 rounded text-right"></td>
+                                <td class="p-1 border border-gray-300"><input v-model="row.matUnit"
+                                        class="w-full border px-1 py-0.5 rounded text-center"></td>
+                                <td class="p-1 border border-gray-300 relative">
+                                    <input v-model="row.matName" @input="searchMaterial(row)" @focus="row.showSuggestions = true" @blur="hideSuggestionsWithDelay(row)"
+                                        class="w-full border px-1 py-0.5 rounded text-[11px]" placeholder="Nama Material" autocomplete="off">
+                                    <!-- Floating Autocomplete Suggestions -->
+                                    <div v-if="row.showSuggestions && row.suggestions && row.suggestions.length > 0" 
+                                        class="absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-xl max-h-48 overflow-y-auto z-50 no-print text-[10px] text-left">
+                                        <div v-for="s in row.suggestions" :key="s.mid" @mousedown="selectMaterial(row, s)"
+                                            class="p-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 flex flex-col">
+                                            <span class="font-medium text-gray-800">{{ s.nama_material }}</span>
+                                            <span class="text-blue-600 font-mono mt-0.5 text-[9px]">MID: {{ s.mid }} | Rp{{ formatNumber(s.last_purchase) }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-1 border border-gray-300"><input type="number" v-model.number="row.matPrice"
+                                        class="w-full border px-1 py-0.5 rounded text-right"></td>
+                                <td class="p-1 border border-gray-300"><input type="number" step="0.1"
+                                        v-model.number="row.rfM" class="w-full border px-1 py-0.5 rounded text-center"></td>
+                                <td class="p-1 border border-gray-300 bg-green-50 text-right font-medium">
+                                    {{ formatNumber(calcRowMaterial(row)) }}
+                                </td>
+
+                                <!-- Labor & Machine Columns -->
+                                <td class="p-1 border border-gray-300"><input type="number" v-model.number="row.manpower"
+                                        class="w-full border px-1 py-0.5 rounded text-center"></td>
+                                <td class="p-1 border border-gray-300"><input type="number" step="0.5"
+                                        v-model.number="row.duration" class="w-full border px-1 py-0.5 rounded text-center">
+                                </td>
+                                <td class="p-1 border border-gray-300"><input type="number" step="0.1"
+                                        v-model.number="row.rfO" class="w-full border px-1 py-0.5 rounded text-center"></td>
+                                <td class="p-1 border border-gray-300"><input type="number"
+                                        v-model.number="row.machineRatePerHour"
+                                        class="w-full border px-1 py-0.5 rounded text-right"></td>
+                                <td class="p-1 border border-gray-300 bg-blue-50 text-right font-medium">
+                                    {{ formatNumber(calcRowMachine(row)) }}
+                                </td>
+                                <td class="p-1 border border-gray-300 bg-blue-50 text-right font-medium">
+                                    {{ formatNumber(calcRowLabor(row)) }}
+                                </td>
+                                <td class="p-1 border border-gray-300"><input type="number"
+                                        v-model.number="row.machineOpCost"
+                                        class="w-full border px-1 py-0.5 rounded text-right"></td>
+
+                                <!-- Total Per Proses -->
+                                <td class="p-1 border border-gray-300 bg-indigo-50 text-right font-bold">
+                                    {{ formatNumber(calcRowTotal(row)) }}
+                                </td>
+
+                                <!-- Summary per Item (Merged Rowspan) -->
+                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
+                                    class="p-1 border border-gray-300 align-middle text-center bg-purple-50">
+                                    <input type="number" v-model.number="item.qty"
+                                        class="w-12 border px-1 py-0.5 rounded text-center font-bold">
+                                </td>
+                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
+                                    class="p-1 border border-gray-300 align-middle text-right bg-yellow-50 font-medium">
+                                    {{ formatNumber(calcItemTotalMaterial(item)) }}
+                                </td>
+                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
+                                    class="p-1 border border-gray-300 align-middle text-right bg-yellow-50 font-medium">
+                                    {{ formatNumber(calcItemTotalLabor(item)) }}
+                                </td>
+                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
+                                    class="p-1 border border-gray-300 align-middle text-right bg-yellow-50 font-medium">
+                                    {{ formatNumber(calcItemTotalMachine(item)) }}
+                                </td>
+                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
+                                    class="p-1 border border-gray-300 align-middle text-right bg-emerald-50 font-bold text-emerald-800 text-xs">
+                                    {{ formatNumber(calcItemGrandTotal(item)) }}
+                                </td>
+
+                                <!-- Action Delete Row -->
+                                <td class="p-1 border border-gray-300 text-center">
+                                    <button @click="removeProcess(itemIndex, rowIndex)"
+                                        class="text-red-500 hover:text-red-700 font-bold px-1"
+                                        title="Hapus baris">×</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+
+                    <!-- Footer Grand Total -->
+                    <tfoot>
+                        <tr class="bg-gray-800 text-white font-bold text-xs">
+                            <td colspan="18" class="p-2 text-right">GRAND TOTAL KESELURUHAN:</td>
+                            <td class="p-2 text-right bg-emerald-700 text-sm">Rp {{ formatNumber(grandTotal) }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Seksi Approval / Persetujuan -->
+            <div class="mt-8 mb-6 w-full max-w-[800px] ml-auto border border-black font-sans text-[11px] no-print-bg">
+                <div class="grid grid-cols-3">
+                    <!-- Kolom Dibuat oleh -->
+                    <div class="border-r border-black flex flex-col justify-between">
+                        <div class="p-2.5 h-16 font-medium text-gray-700">Dibuat oleh,</div>
+                        <div class="border-t border-black p-2 bg-gray-50/30">
+                            <input v-model="approval.created" class="w-full bg-transparent border-none focus:outline-none font-semibold text-center text-gray-800 text-[11px]" placeholder="Ketik nama pembuat...">
+                        </div>
+                    </div>
+                    <!-- Kolom Dicek oleh -->
+                    <div class="border-r border-black flex flex-col justify-between">
+                        <div class="p-2.5 h-16 font-medium text-gray-700">Dicek oleh,</div>
+                        <div class="border-t border-black p-2 bg-gray-50/30">
+                            <input v-model="approval.checked" class="w-full bg-transparent border-none focus:outline-none font-semibold text-center text-gray-800 text-[11px]" placeholder="Ketik nama pemeriksa...">
+                        </div>
+                    </div>
+                    <!-- Kolom Disetujui oleh -->
+                    <div class="flex flex-col justify-between">
+                        <div class="p-2.5 h-16 font-medium text-gray-700">Disetujui oleh,</div>
+                        <div class="border-t border-black p-2 bg-gray-50/30">
+                            <input v-model="approval.approved" class="w-full bg-transparent border-none focus:outline-none font-semibold text-center text-gray-800 text-[11px]" placeholder="Ketik nama penyetuju...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 items-center">
+                <button @click="addItem"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-xs font-semibold select-none">+ Tambah
+                    Komponen Baru</button>
+                <button onclick="window.print()"
+                    class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-xs font-semibold select-none">Cetak / Simpan
+                    PDF</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: false,
+                    approval: {
+                        created: 'Heristo Bramastra Gifary',
+                        checked: 'Singgih Andriyanto',
+                        approved: 'Andri Arif Cahyono'
+                    },
+                    masterMidList: [],
+                    midFileLoaded: false,
+                    loginUsername: '',
+                    loginPassword: '',
+                    loginError: '',
+                    rememberMe: false,
+                    machines: [
+                        { name: 'Lathe Conventional', rate: 40250 },
+                        { name: 'Lathe CNC', rate: 125350 },
+                        { name: 'Honing', rate: 32200 },
+                        { name: 'Kolter', rate: 62100 },
+                        { name: 'Las SMAW', rate: 23000 },
+                        { name: 'Surface Grinding', rate: 46000 },
+                        { name: 'Cylinder Grinding', rate: 75900 },
+                        { name: 'Hand Grinding', rate: 11500 },
+                        { name: 'Connecting Rod', rate: 32200 },
+                        { name: 'Balancing', rate: 78200 },
+                        { name: 'Test motor 110 kW', rate: 185611 },
+                        { name: 'Test motor 75 kW', rate: 126553 },
+                        { name: 'Test motor 45 kW', rate: 75932 },
+                        { name: 'Test motor 22 kW', rate: 37122 },
+                        { name: 'Test motor 7,5 kW', rate: 12655 },
+                        { name: 'Kompresor (Impact)', rate: 23000 },
+                        { name: 'Metal Spray', rate: 151800 },
+                        { name: 'Wire cut', rate: 14375 },
+                        { name: 'Sandblasting', rate: 80500 },
+                        { name: 'Powder coating', rate: 16100 },
+                        { name: 'Line Boring Horizontal', rate: 82800 },
+                        { name: 'Mesin Skrap', rate: 31625 },
+                        { name: 'Bubut Otomotif', rate: 16100 },
+                        { name: 'Milling and Drilling', rate: 35650 },
+                        { name: 'Las MIG', rate: 20700 },
+                        { name: 'Las GTAW', rate: 20700 }
+                    ],
+                    laborRatePerHour: 23121,
+                    project: {
+                        name: 'SHAFT',
+                        company: 'PT WIRA UTAMA INDUSTRY',
+                        pic: 'Andri, Irvan, Singgih'
+                    },
+                    items: [
+                        {
+                            id: 1,
+                            name: 'Stopper Bearing',
+                            notes: 'A. Fabrikasi stopper bearing (1 set = 2 pcs)\nmetode Conventional Lathe',
+                            qty: 2,
+                            processes: [
+                                {
+                                    id: 101,
+                                    detail: 'Flame cutting',
+                                    supplier: 'M-BB-PRK-0010',
+                                    matQty: 1,
+                                    matUnit: 'mm2',
+                                    matName: 'PLAT A-36 T 10 MM',
+                                    matPrice: 45872,
+                                    rfM: 1.1,
+                                    manpower: 1,
+                                    duration: 1,
+                                    rfO: 1,
+                                    machineRatePerHour: 40000,
+                                    machineOpCost: 105000,
+                                    showSuggestions: false,
+                                    suggestions: []
+                                },
+                                {
+                                    id: 102,
+                                    detail: 'Conventional lathe',
+                                    supplier: '',
+                                    matQty: 0,
+                                    matUnit: '',
+                                    matName: '',
+                                    matPrice: 0,
+                                    rfM: 1,
+                                    manpower: 2,
+                                    duration: 1,
+                                    rfO: 1,
+                                    machineRatePerHour: 35000,
+                                    machineOpCost: 0,
+                                    showSuggestions: false,
+                                    suggestions: []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            computed: {
+                grandTotal() {
+                    return this.items.reduce((sum, item) => sum + this.calcItemGrandTotal(item), 0);
+                }
+            },
+            methods: {
+                // Perhitungan per Baris Proses
+                calcRowMaterial(row) {
+                    return (row.matQty || 0) * (row.matPrice || 0) * (row.rfM || 1);
+                },
+                calcRowMachine(row) {
+                    return (row.machineRatePerHour || 0) * (row.duration || 0) * (row.rfO || 1);
+                },
+                calcRowLabor(row) {
+                    return (row.manpower || 0) * (row.duration || 0) * (this.laborRatePerHour || 0);
+                },
+                calcRowTotal(row) {
+                    return this.calcRowMaterial(row) + this.calcRowMachine(row) + this.calcRowLabor(row) + (row.machineOpCost || 0);
+                },
+
+                // Perhitungan Agregat per Komponen Item
+                calcItemTotalMaterial(item) {
+                    const subtotal = item.processes.reduce((sum, p) => sum + this.calcRowMaterial(p), 0);
+                    return subtotal * (item.qty || 1);
+                },
+                calcItemTotalLabor(item) {
+                    const subtotal = item.processes.reduce((sum, p) => sum + this.calcRowLabor(p), 0);
+                    return subtotal * (item.qty || 1);
+                },
+                calcItemTotalMachine(item) {
+                    const subtotal = item.processes.reduce((sum, p) => sum + (this.calcRowMachine(p) + (p.machineOpCost || 0)), 0);
+                    return subtotal * (item.qty || 1);
+                },
+                calcItemGrandTotal(item) {
+                    const subtotal = item.processes.reduce((sum, p) => sum + this.calcRowTotal(p), 0);
+                    return subtotal * (item.qty || 1);
+                },
+
+                // Manipulasi Baris & Komponen
+                addItem() {
+                    this.items.push({
+                        id: Date.now(),
+                        name: '',
+                        notes: '',
+                        qty: 1,
+                        processes: [this.createEmptyProcess()]
+                    });
+                },
+                addProcess(itemIndex) {
+                    this.items[itemIndex].processes.push(this.createEmptyProcess());
+                },
+                removeProcess(itemIndex, rowIndex) {
+                    if (this.items[itemIndex].processes.length > 1) {
+                        this.items[itemIndex].processes.splice(rowIndex, 1);
+                    } else {
+                        if (this.items.length > 1) {
+                            this.items.splice(itemIndex, 1);
+                        }
+                    }
+                },
+                createEmptyProcess() {
+                    return {
+                        id: Date.now() + Math.random(),
+                        detail: '',
+                        supplier: '',
+                        matQty: 0,
+                        matUnit: '',
+                        matName: '',
+                        matPrice: 0,
+                        rfM: 1,
+                        manpower: 1,
+                        duration: 0,
+                        rfO: 1,
+                        machineRatePerHour: 0,
+                        machineOpCost: 0,
+                        showSuggestions: false,
+                        suggestions: []
+                    };
+                },
+                formatNumber(val) {
+                    return Math.round(val || 0).toLocaleString('id-ID');
+                },
+                login() {
+                    if (this.loginUsername === 'admin' && this.loginPassword === 'admin123') {
+                        this.isLoggedIn = true;
+                        this.loginError = '';
+                        if (this.rememberMe) {
+                            localStorage.setItem('isLoggedIn', 'true');
+                        }
+                    } else {
+                        this.loginError = 'Username atau password salah!';
+                    }
+                },
+                logout() {
+                    this.isLoggedIn = false;
+                    localStorage.removeItem('isLoggedIn');
+                    this.loginUsername = '';
+                    this.loginPassword = '';
+                },
+                selectMachineTemplate(event, row) {
+                    const selectedName = event.target.value;
+                    if (!selectedName) return;
+
+                    const machine = this.machines.find(m => m.name === selectedName);
+                    if (machine) {
+                        row.detail = machine.name;
+                        row.machineRatePerHour = machine.rate;
+                    }
+
+                    // Reset selection dropdown
+                    event.target.value = "";
+                },
+                handleMasterJsonUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            this.masterMidList = data;
+                            this.midFileLoaded = true;
+                            alert(`✅ Berhasil! Memuat ${data.length} item dari file.`);
+                        } catch (err) {
+                            alert("❌ Gagal membaca file JSON. Pastikan file valid.");
+                        }
+                    };
+                    reader.readAsText(file);
+                },
+                searchMaterial(row) {
+                    const query = (row.matName || '').trim().toLowerCase();
+                    if (query.length < 2 || !this.masterMidList || this.masterMidList.length === 0) {
+                        row.suggestions = [];
+                        return;
+                    }
+
+                    const matches = [];
+                    for (let i = 0; i < this.masterMidList.length; i++) {
+                        const m = this.masterMidList[i];
+                        if (m.nama_material && m.nama_material.toLowerCase().includes(query)) {
+                            matches.push(m);
+                            if (matches.length >= 15) break;
+                        }
+                    }
+                    row.suggestions = matches;
+                },
+                hideSuggestionsWithDelay(row) {
+                    setTimeout(() => {
+                        row.showSuggestions = false;
+                    }, 200);
+                },
+                selectMaterial(row, item) {
+                    row.matName = item.nama_material;
+                    row.supplier = item.mid;
+                    row.matPrice = item.last_purchase;
+                    row.suggestions = [];
+                    row.showSuggestions = false;
+                },
+                initResizableColumns() {
+                    const table = document.querySelector('table');
+                    if (!table) return;
+
+                    const ths = table.querySelectorAll('th');
+                    ths.forEach(th => {
+                        const colspan = th.getAttribute('colspan');
+                        if (colspan && parseInt(colspan) > 1) return;
+
+                        th.style.position = 'relative';
+
+                        // Check if resizer already exists to avoid duplicates
+                        if (th.querySelector('.column-resizer')) return;
+
+                        const resizer = document.createElement('div');
+                        resizer.className = 'column-resizer no-print';
+                        resizer.style.position = 'absolute';
+                        resizer.style.top = '0';
+                        resizer.style.right = '-3px';
+                        resizer.style.width = '8px';
+                        resizer.style.height = '100%';
+                        resizer.style.cursor = 'col-resize';
+                        resizer.style.userSelect = 'none';
+                        resizer.style.zIndex = '50';
+
+                        th.appendChild(resizer);
+
+                        let startX, startWidth;
+
+                        resizer.addEventListener('mousedown', (e) => {
+                            startX = e.pageX;
+                            startWidth = th.offsetWidth;
+
+                            const onMouseMove = (moveEvent) => {
+                                const width = startWidth + (moveEvent.pageX - startX);
+                                if (width > 30) {
+                                    th.style.width = width + 'px';
+                                    th.style.minWidth = width + 'px';
+                                }
+                            };
+
+                            const onMouseUp = () => {
+                                document.removeEventListener('mousemove', onMouseMove);
+                                document.removeEventListener('mouseup', onMouseUp);
+                            };
+
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUp);
+
+                            e.preventDefault();
+                        });
+                    });
+                }
+            },
+            watch: {
+                isLoggedIn(val) {
+                    if (val) {
+                        this.$nextTick(() => {
+                            this.initResizableColumns();
+                        });
+                    }
+                }
+            },
+            mounted() {
+                if (this.isLoggedIn) {
+                    this.$nextTick(() => {
+                        this.initResizableColumns();
+                    });
+                }
+            },
+            updated() {
+                if (this.isLoggedIn) {
+                    this.$nextTick(() => {
+                        this.initResizableColumns();
+                    });
+                }
+            },
+            created() {
+                if (localStorage.getItem('isLoggedIn') === 'true') {
+                    this.isLoggedIn = true;
+                }
+                // Auto-load master_mid (8).json
+                fetch('master_mid (8).json')
+                    .then(res => {
+                        if (!res.ok) throw new Error("Fetch failed");
+                        return res.json();
+                    })
+                    .then(data => {
+                        this.masterMidList = data;
+                        this.midFileLoaded = true;
+                        console.log("Master MID loaded automatically:", data.length, "items");
+                    })
+                    .catch(err => {
+                        console.warn("Auto-load master_mid (8).json failed (CORS block on file:// protocol). Use manual import button.");
+                    });
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

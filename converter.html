@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Konverter Excel ke JSON (Master MID & Harga)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background-color: #f1f5f9;">
+
+  <div
+    style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; margin: auto;">
+    <h2 style="color: #1e293b; margin-top: 0;">🛠️ Konverter Master MID & Harga</h2>
+    <p style="color: #475569; line-height: 1.6;">
+      Pilih file Excel master Anda. Sistem akan mengekstrak <b>MID</b>, <b>Item Name</b>, dan <b>Last Purchase Rate</b>
+      menjadi <b>master_mid.json</b>.
+    </p>
+
+    <div
+      style="margin-top: 20px; padding: 20px; border: 2px dashed #cbd5e1; border-radius: 8px; text-align: center; background: #f8fafc;">
+      <input type="file" id="fileUpload" accept=".xlsx, .xls" style="font-size: 16px; cursor: pointer;" />
+    </div>
+
+    <div id="status" style="margin-top: 15px; font-size: 13px; color: #64748b; text-align: center;"></div>
+  </div>
+
+  <script>
+    document.getElementById('fileUpload').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('status');
+      statusEl.innerText = "Memproses data...";
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          // cellDates: true, raw: true untuk menjaga nilai numerik murni
+          const workbook = XLSX.read(data, { type: 'array', raw: true });
+
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+
+          // Konversi sheet ke JSON
+          const rawJson = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+          // Helper pencarian kolom dengan pencocokan kata kunci fleksibel
+          const getValByKeywords = (row, keywords) => {
+            for (const key of Object.keys(row)) {
+              const cleanKey = key.trim().toLowerCase();
+              if (keywords.some(kw => cleanKey.includes(kw.toLowerCase()))) {
+                return row[key];
+              }
+            }
+            return "";
+          };
+
+          // Helper pembersih angka harga
+          const parsePrice = (val) => {
+            if (val === null || val === undefined || val === "" || val === "-") return 0;
+            if (typeof val === "number") return val;
+
+            // Jika dalam bentuk teks (misal: "Rp 716.957" atau "716,957")
+            let str = val.toString().replace(/Rp/gi, '').trim();
+            if (str === "-" || str === "") return 0;
+
+            // Buang titik pemisah ribuan dan ganti koma desimal jika ada
+            str = str.replace(/\./g, '').replace(/,/g, '.');
+            const num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+          };
+
+          const formattedJson = rawJson.map(row => {
+            const rawMid = getValByKeywords(row, ["mid", "kode mid", "item code"]);
+            const rawMaterial = getValByKeywords(row, ["item name", "nama material", "material name", "deskripsi", "nama barang"]);
+            const rawPrice = getValByKeywords(row, ["purchase rate", "last purchase", "last price", "harga", "rate"]);
+
+            return {
+              mid: rawMid ? rawMid.toString().trim() : "",
+              nama_material: rawMaterial ? rawMaterial.toString().trim() : "",
+              last_purchase: parsePrice(rawPrice)
+            };
+          }).filter(item => item.mid !== "" || item.nama_material !== "");
+
+          // Buat file JSON dan trigger download
+          const jsonString = JSON.stringify(formattedJson, null, 2);
+          const blob = new Blob([jsonString], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = "master_mid.json";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          statusEl.innerText = `Selesai! ${formattedJson.length} baris berhasil dikonversi.`;
+          alert(`✅ Berhasil! File master_mid.json (${formattedJson.length} data) berhasil didownload.`);
+        } catch (err) {
+          console.error(err);
+          statusEl.innerText = "Terjadi kesalahan saat memproses file.";
+          alert("❌ Gagal membaca file Excel. Pastikan file valid.");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  </script>
+</body>
+
+</html>
