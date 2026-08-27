@@ -7,21 +7,32 @@
     <title>Kalkulator Rincian Actual Cost</title>
     <!-- Tailwind CSS CDN untuk styling ringkas -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
     <!-- Vue 3 CDN untuk kalkulasi reaktif otomatis -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- SheetJS CDN untuk export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Google Fonts Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
         }
+
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
+
         /* Glassmorphism card */
         .glass-card {
             background: rgba(18, 18, 22, 0.45);
@@ -30,27 +41,215 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: inset 0 0 35px rgba(255, 255, 255, 0.02), 0 20px 50px rgba(0, 0, 0, 0.6);
         }
+
         /* Floating animation */
         @keyframes float-slow {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-8px) rotate(1.5deg); }
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-8px) rotate(1.5deg);
+            }
         }
+
         .animate-float {
             animation: float-slow 10s ease-in-out infinite;
         }
+
         .column-resizer {
             transition: border-color 0.15s;
         }
+
         .column-resizer:hover {
-            border-right: 2px solid #3b82f6 !important;
+            border-right: 2px solid #10b981 !important;
         }
+
+        /* Sleek modern inputs & elements for screens */
+        .table-input {
+            width: 100%;
+            background-color: transparent;
+            border: 1px solid rgba(226, 232, 240, 1);
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 11px;
+            color: inherit;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .dark .table-input {
+            border-color: rgba(71, 85, 105, 0.5);
+            color: rgba(243, 244, 246, 1);
+        }
+
+        .table-input:focus {
+            border-color: rgba(16, 185, 129, 0.6);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .dark .table-input:focus {
+            background-color: rgba(15, 23, 42, 0.4);
+            border-color: rgba(16, 185, 129, 0.8);
+        }
+
+        .table-select {
+            width: 100%;
+            background-color: rgba(248, 250, 252, 1);
+            border: 1px solid rgba(226, 232, 240, 1);
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 10px;
+            color: rgba(71, 85, 105, 1);
+            outline: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .dark .table-select {
+            background-color: rgba(15, 23, 42, 0.5);
+            border-color: rgba(71, 85, 105, 0.5);
+            color: rgba(203, 213, 225, 1);
+        }
+
+        .table-select:focus {
+            border-color: rgba(16, 185, 129, 0.6);
+        }
+
+        /* Scrollbar styles for suggestion list */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 3px;
+        }
+
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(75, 85, 99, 0.5);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.8);
+        }
+
         @media print {
-            .no-print {
-                display: none !important;
+            @page {
+                size: A4 landscape;
             }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
             body {
                 background-color: white !important;
                 color: black !important;
+                font-size: 8px !important;
+                padding-top: 1cm !important;
+                padding-left: 1cm !important;
+                padding-right: 1cm !important;
+            }
+
+            th,
+            td {
+                min-width: 0 !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .overflow-x-auto {
+                overflow: visible !important;
+                border: none !important;
+            }
+
+            .print-full-width {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            #app {
+                background-color: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+                zoom: var(--print-zoom, 60%);
+            }
+
+            /* Style inputs to appear as normal table text when printed */
+            input,
+            textarea,
+            select {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                font-size: inherit !important;
+                font-weight: inherit !important;
+                color: inherit !important;
+                text-align: inherit !important;
+                resize: none !important;
+            }
+
+            .table-input {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                font-size: inherit !important;
+                font-weight: inherit !important;
+                color: inherit !important;
+                text-align: inherit !important;
+            }
+
+            .table-select {
+                display: none !important;
+            }
+
+            /* Hide placeholders when printing */
+            input::placeholder,
+            textarea::placeholder {
+                color: transparent !important;
+            }
+
+            /* Table formatting for high-quality printing */
+            table {
+                width: 100% !important;
+                table-layout: auto !important;
+            }
+
+            th,
+            td {
+                padding: 4px !important;
+                font-size: 9px !important;
+                word-wrap: break-word;
+            }
+
+            /* Prevent rows from splitting awkwardly across pages */
+            tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
             }
         }
     </style>
@@ -58,16 +257,25 @@
 
 <body class="text-gray-800 text-xs">
 
-    <div id="app" :class="isLoggedIn ? 'bg-gray-100 p-4 min-h-screen' : 'bg-[#030307] min-h-screen relative overflow-hidden flex items-center justify-center'" style="width: 100%;">
+    <div id="app"
+        :class="isLoggedIn ? 'bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 p-4 min-h-screen transition-colors duration-300' : 'bg-[#030307] min-h-screen relative overflow-hidden flex items-center justify-center'"
+        :style="{ width: '100%', '--print-zoom': (printZoom || 60) / 100 }">
 
         <!-- Halaman Login -->
-        <div v-if="!isLoggedIn" class="w-full min-h-screen flex items-center justify-center relative overflow-hidden select-none bg-cover bg-center bg-no-repeat" style="background-image: url('Background.png');">
+        <div v-if="!isLoggedIn"
+            class="w-full min-h-screen flex items-center justify-center relative overflow-hidden select-none bg-cover bg-center bg-no-repeat"
+            style="background-image: url('Background.png');">
 
             <!-- Circular Glass Login Form -->
-            <div class="glass-card animate-float rounded-full flex flex-col justify-center items-center p-8 relative z-10 text-white select-none shadow-2xl" style="width: min(92vw, 430px); height: min(92vw, 430px);">
+            <div class="glass-card animate-float rounded-full flex flex-col justify-center items-center p-8 relative z-10 text-white select-none shadow-2xl"
+                style="width: min(92vw, 430px); height: min(92vw, 430px);">
                 <!-- Internal Glow spheres for smooth glass color reflections -->
-                <div class="absolute top-1/4 left-1/3 w-[220px] h-[220px] bg-teal-500/10 rounded-full blur-[65px] pointer-events-none"></div>
-                <div class="absolute bottom-1/4 right-1/3 w-[220px] h-[220px] bg-fuchsia-500/10 rounded-full blur-[65px] pointer-events-none"></div>
+                <div
+                    class="absolute top-1/4 left-1/3 w-[220px] h-[220px] bg-teal-500/10 rounded-full blur-[65px] pointer-events-none">
+                </div>
+                <div
+                    class="absolute bottom-1/4 right-1/3 w-[220px] h-[220px] bg-fuchsia-500/10 rounded-full blur-[65px] pointer-events-none">
+                </div>
 
                 <div class="w-full max-w-[280px] flex flex-col items-center">
                     <!-- Title -->
@@ -75,7 +283,8 @@
 
                     <form @submit.prevent="login" class="w-full flex flex-col items-center">
                         <!-- Error Message -->
-                        <div v-if="loginError" class="w-full text-red-400 text-[10px] text-center mb-3 bg-red-950/40 border border-red-500/20 py-1 px-2 rounded">
+                        <div v-if="loginError"
+                            class="w-full text-red-400 text-[10px] text-center mb-3 bg-red-950/40 border border-red-500/20 py-1 px-2 rounded">
                             {{ loginError }}
                         </div>
 
@@ -85,7 +294,8 @@
                                 class="w-full bg-white/[0.04] border border-white/10 hover:border-white/20 focus:border-teal-500/40 focus:bg-white/[0.08] rounded-xl py-2.5 px-4 pr-10 text-white placeholder-white/30 focus:outline-none transition-all duration-300 text-[12px] tracking-wide">
                             <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/50">
                                 <svg class="w-4 h-4 text-white/70" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    <path
+                                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                                 </svg>
                             </span>
                         </div>
@@ -96,7 +306,8 @@
                                 class="w-full bg-white/[0.04] border border-white/10 hover:border-white/20 focus:border-teal-500/40 focus:bg-white/[0.08] rounded-xl py-2.5 px-4 pr-10 text-white placeholder-white/30 focus:outline-none transition-all duration-300 text-[12px] tracking-wide">
                             <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/50">
                                 <svg class="w-4 h-4 text-white/70" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                                    <path
+                                        d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
                                 </svg>
                             </span>
                         </div>
@@ -110,91 +321,223 @@
 
                     <!-- Links -->
                     <div class="w-full flex justify-between items-center px-1 text-[10px] text-white/50">
-                        <label class="flex items-center gap-1.5 cursor-pointer hover:text-white transition-all select-none">
-                            <input type="checkbox" v-model="rememberMe" class="rounded bg-white/10 border-white/20 accent-teal-500 w-3.5 h-3.5 cursor-pointer">
+                        <label
+                            class="flex items-center gap-1.5 cursor-pointer hover:text-white transition-all select-none">
+                            <input type="checkbox" v-model="rememberMe"
+                                class="rounded bg-white/10 border-white/20 accent-teal-500 w-3.5 h-3.5 cursor-pointer">
                             <span>Remember me</span>
                         </label>
-                        <a href="#" @click.prevent="alert('Silakan hubungi administrator IT untuk mereset kata sandi.')" class="hover:text-white hover:underline transition-all">Forgot password?</a>
+                        <a href="#" @click.prevent="alert('Silakan hubungi administrator IT untuk mereset kata sandi.')"
+                            class="hover:text-white hover:underline transition-all">Forgot password?</a>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Dashboard Kalkulator -->
-        <div v-else class="max-w-[1600px] mx-auto bg-white p-5 rounded-lg shadow border border-gray-200">
+        <div v-else
+            class="max-w-[1600px] mx-auto bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print:bg-white print:border-gray-400 print:p-0 print:shadow-none print:rounded-none print-full-width">
 
-            <!-- Header Info -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-yellow-50 p-4 rounded border border-yellow-200">
-                <div class="space-y-2">
-                    <div class="flex items-center">
-                        <label class="w-36 font-semibold">Unit / Project Name:</label>
-                        <input v-model="project.name" class="border px-2 py-1 rounded w-64 bg-white"
-                            placeholder="Contoh: SHAFT">
+            <!-- Top Action Bar (Theme Toggle, Import MID, Logout) -->
+            <div
+                class="flex flex-wrap justify-between items-center gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800 no-print">
+                <div class="flex items-center gap-3">
+                    <!-- Page Title / Logo -->
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="bg-gradient-to-tr from-emerald-500 to-teal-600 p-2 rounded-lg text-white shadow-md shadow-emerald-500/10">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-sm font-bold text-slate-800 dark:text-slate-100">Kalkulator Rincian Actual
+                                Cost</h1>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">Professional Costing & Project
+                                Analysis Tool</p>
+                        </div>
                     </div>
-                    <div class="flex items-center">
-                        <label class="w-36 font-semibold">Company:</label>
-                        <input v-model="project.company" class="border px-2 py-1 rounded w-64 bg-white"
-                            placeholder="Nama Perusahaan">
-                    </div>
-                    <div class="flex items-center">
-                        <label class="w-36 font-semibold">Penanggung Jawab:</label>
-                        <input v-model="project.pic" class="border px-2 py-1 rounded w-64 bg-white" placeholder="Nama PIC">
+
+                    <!-- Status Badge Master MID -->
+                    <div class="ml-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border select-none transition-all duration-300"
+                        :class="midFileLoaded ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40 shadow-sm shadow-emerald-500/5' : 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/30'">
+                        <span class="w-1.5 h-1.5 rounded-full"
+                            :class="midFileLoaded ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
+                        <span>{{ midFileLoaded ? `Master MID Aktif (${formatNumber(masterMidList.length)} item)` :
+                            'Master MID Belum Dimuat' }}</span>
                     </div>
                 </div>
-                <div class="flex flex-col justify-between items-end">
-                    <button @click="logout" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1.5 rounded transition-all flex items-center gap-1.5 shadow mb-2 text-[10px] no-print">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+
+                <div class="flex items-center gap-2">
+                    <!-- Theme Switcher Button -->
+                    <button @click="toggleDarkMode"
+                        class="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 p-1.5 rounded-xl transition-all shadow-sm flex items-center justify-center cursor-pointer"
+                        title="Ganti Tema">
+                        <!-- Sun Icon -->
+                        <svg v-if="darkMode" class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.364l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z">
+                            </path>
+                        </svg>
+                        <!-- Moon Icon -->
+                        <svg v-else class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <!-- Divider -->
+                    <span class="w-px h-5 bg-slate-200 dark:bg-slate-800 mx-1"></span>
+
+                    <!-- Logout Button -->
+                    <button @click="logout"
+                        class="bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm text-[10px] cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
                         </svg>
                         Keluar / Logout
                     </button>
-                    <div class="flex items-center bg-white p-2 rounded border border-yellow-300">
-                        <label class="font-bold mr-3 text-sm">Biaya Tenaga Kerja / Jam:</label>
-                        <span class="font-semibold mr-1">Rp</span>
+                </div>
+            </div>
+
+            <!-- Header Info (Excel Style) -->
+            <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 print-full-width">
+                <!-- Left Table -->
+                <div
+                    class="border border-gray-300 dark:border-slate-700 text-xs shadow-sm bg-white dark:bg-slate-900 rounded-xl overflow-hidden flex flex-col print:border-gray-400 print:rounded-none">
+                    <div class="flex border-b border-gray-200 dark:border-slate-800 print:border-gray-400">
+                        <div
+                            class="w-36 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 p-2 font-semibold border-r border-gray-200 dark:border-slate-800 print:bg-[#ffd966] print:text-black print:border-gray-400 flex items-center">
+                            Unit/Project Name</div>
+                        <div class="w-64 p-1 flex items-center bg-white dark:bg-slate-900 print:bg-white">
+                            <input v-model="project.name"
+                                class="w-full px-2 py-1 bg-transparent border-none text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:rounded"
+                                placeholder="Fabrikasi Shaft/repair hosing">
+                        </div>
+                    </div>
+                    <div class="flex border-b border-gray-200 dark:border-slate-800 print:border-gray-400">
+                        <div
+                            class="w-36 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 p-2 font-semibold border-r border-gray-200 dark:border-slate-800 print:bg-[#ffd966] print:text-black print:border-gray-400 flex items-center">
+                            Company</div>
+                        <div class="w-64 p-1 flex items-center bg-white dark:bg-slate-900 print:bg-white">
+                            <input v-model="project.company"
+                                class="w-full px-2 py-1 bg-transparent border-none text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:rounded"
+                                placeholder="PT. Intidaya Dinamika Sejati">
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div
+                            class="w-36 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 p-2 font-semibold border-r border-gray-200 dark:border-slate-800 print:bg-[#ffd966] print:text-black print:border-gray-400 flex items-center">
+                            Penanggung Jawab</div>
+                        <div class="w-64 p-1 flex items-center bg-white dark:bg-slate-900 print:bg-white">
+                            <input v-model="project.pic"
+                                class="w-full px-2 py-1 bg-transparent border-none text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:rounded"
+                                placeholder="Andri/singgih">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Table (Labor Rate) -->
+                <div
+                    class="border border-gray-300 dark:border-slate-700 text-xs flex items-center bg-white dark:bg-slate-900 shadow-sm rounded-xl overflow-hidden self-start md:self-center md:mx-auto print:border-gray-400 print:rounded-none">
+                    <div
+                        class="bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 p-2.5 font-semibold border-r border-gray-200 dark:border-slate-800 print:bg-[#ffd966] print:text-black print:border-gray-400">
+                        Biaya Tenaga Kerja/Jam</div>
+                    <div
+                        class="p-1.5 flex items-center gap-1 w-36 justify-center bg-white dark:bg-slate-900 print:bg-white">
+                        <span class="font-semibold text-gray-500 dark:text-gray-400">Rp</span>
                         <input type="number" v-model.number="laborRatePerHour"
-                            class="border px-2 py-1 rounded w-32 font-bold text-right text-blue-700">
+                            class="w-24 font-bold text-center bg-transparent border-none text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:rounded">
                     </div>
                 </div>
             </div>
 
             <!-- Table Container -->
-            <div class="overflow-x-auto border border-gray-300 rounded mb-4">
-                <table class="min-w-full text-left border-collapse">
+            <div
+                class="overflow-x-auto border border-slate-300 dark:border-slate-800 rounded-2xl mb-6 shadow-lg bg-white dark:bg-slate-900 print:border-gray-400 print:rounded-none print:shadow-none">
+                <table
+                    class="min-w-full text-left border-collapse border border-slate-300 dark:border-slate-800 print:border-gray-400">
                     <!-- Header Kolom Bertingkat -->
                     <thead>
-                        <tr class="bg-gray-800 text-white text-[11px] text-center">
-                            <th rowspan="2" class="p-2 border border-gray-600 min-w-[200px]">Aktivitas (Komponen)</th>
-                            <th rowspan="2" class="p-2 border border-gray-600 min-w-[140px]">Detail Pekerjaan</th>
-                            <th colspan="7" class="p-2 border border-gray-600 bg-green-800">Biaya Material</th>
-                            <th colspan="7" class="p-2 border border-gray-600 bg-blue-800">Biaya Tenaga Kerja & Mesin</th>
-                            <th rowspan="2" class="p-2 border border-gray-600 min-w-[100px] bg-indigo-900">Total per Proses
+                        <tr
+                            class="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 text-[11px] font-semibold text-center border-b border-slate-300 dark:border-slate-800 print:bg-[#c6e0b4] print:text-black print:border-gray-400">
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[120px]">
+                                Aktivitas</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[120px]">
+                                Detail Informasi</th>
+                            <th colspan="5"
+                                class="p-2 border border-slate-300 dark:border-slate-800 bg-emerald-50 dark:bg-emerald-950/40 print:bg-[#c6e0b4] print:border-gray-400">
+                                Material</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 w-16">
+                                Manpower</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 w-16">
+                                Durasi (Jam)</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 w-12">
+                                RF.O</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 w-12">
+                                RF.M</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[100px]">
+                                Biaya mesin/Jam</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[100px]">
+                                Biaya Material</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[100px]">
+                                Biaya Tenaga Kerja</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[100px]">
+                                Operasional Mesin</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[110px]">
+                                TOTAL PER PROSES</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 w-14">QTY
                             </th>
-                            <th rowspan="2" class="p-2 border border-gray-600 w-16 bg-purple-900">Qty Item</th>
-                            <th colspan="3" class="p-2 border border-gray-600 bg-yellow-800">Jumlah Biaya Total</th>
-                            <th rowspan="2" class="p-2 border border-gray-600 min-w-[120px] bg-emerald-900">JUMLAH (Rp)</th>
-                            <th rowspan="2" class="p-2 border border-gray-600 w-12 no-print">Aksi</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[110px]">
+                                Jumlah Biaya Material</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[110px]">
+                                Jumlah Biaya Tenaga Kerja</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[110px]">
+                                Jumlah Biaya Operasional Mesin</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[120px]">
+                                JUMLAH</th>
+                            <th rowspan="2"
+                                class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 w-10 no-print">
+                                Aksi</th>
                         </tr>
-                        <tr class="bg-gray-700 text-white text-[10px] text-center">
-                            <!-- Sub Material -->
-                            <th class="p-1 border border-gray-600">MID</th>
-                            <th class="p-1 border border-gray-600 w-14">Qty</th>
-                            <th class="p-1 border border-gray-600 w-14">Satuan</th>
-                            <th class="p-1 border border-gray-600 min-w-[120px]">Nama Material</th>
-                            <th class="p-1 border border-gray-600 min-w-[80px]">Harga Satuan</th>
-                            <th class="p-1 border border-gray-600 w-12">RF.M</th>
-                            <th class="p-1 border border-gray-600 min-w-[90px]">Biaya Material</th>
-                            <!-- Sub Tenaga Kerja & Mesin -->
-                            <th class="p-1 border border-gray-600 w-12">MP</th>
-                            <th class="p-1 border border-gray-600 w-14">Durasi (Jam)</th>
-                            <th class="p-1 border border-gray-600 w-12">RF.O</th>
-                            <th class="p-1 border border-gray-600 min-w-[80px]">Biaya Mesin/Jam</th>
-                            <th class="p-1 border border-gray-600 min-w-[80px]">Biaya Mesin</th>
-                            <th class="p-1 border border-gray-600 min-w-[80px]">Biaya Naker</th>
-                            <th class="p-1 border border-gray-600 min-w-[80px]">Operasional Mesin</th>
-                            <!-- Total Summary Item -->
-                            <th class="p-1 border border-gray-600 min-w-[80px]">Total Material</th>
-                            <th class="p-1 border border-gray-600 min-w-[80px]">Total Naker</th>
-                            <th class="p-1 border border-gray-600 min-w-[80px]">Total Mesin</th>
+                        <tr
+                            class="bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 text-[10px] font-semibold text-center border-b border-slate-300 dark:border-slate-800 print:bg-[#c6e0b4] print:text-black print:border-gray-400">
+                            <th
+                                class="p-1 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[150px]">
+                                Nama Material</th>
+                            <th
+                                class="p-1 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[80px]">
+                                MID</th>
+                            <th class="p-1 border border-slate-300 dark:border-slate-800 print:border-gray-400 w-14">Qty
+                            </th>
+                            <th class="p-1 border border-slate-300 dark:border-slate-800 print:border-gray-400 w-14">
+                                Satuan</th>
+                            <th
+                                class="p-1 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[90px]">
+                                Harga Satuan</th>
                         </tr>
                     </thead>
 
@@ -202,28 +545,28 @@
                     <tbody>
                         <template v-for="(item, itemIndex) in items" :key="item.id">
                             <tr v-for="(row, rowIndex) in item.processes" :key="row.id"
-                                class="hover:bg-gray-50 text-[11px]">
+                                class="hover:bg-slate-50 dark:hover:bg-slate-800/40 text-[11px] bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800/60 text-slate-700 dark:text-slate-300 print:bg-white print:text-black print:border-gray-400">
 
                                 <!-- Kolom Aktivitas (Merged Rowspan) -->
                                 <td v-if="rowIndex === 0" :rowspan="item.processes.length"
-                                    class="p-2 border border-gray-300 align-top bg-yellow-50/50">
+                                    class="p-2 border border-slate-300 dark:border-slate-800 align-top bg-amber-50/10 dark:bg-amber-950/5 print:border-gray-400 print:bg-white">
                                     <input v-model="item.name"
-                                        class="w-full font-bold border-b border-gray-300 focus:outline-none mb-1 bg-transparent"
+                                        class="w-full font-bold border-b border-slate-200 dark:border-slate-750 focus:border-amber-500 focus:outline-none mb-1 bg-transparent text-slate-800 dark:text-slate-100"
                                         placeholder="Nama Komponen">
                                     <textarea v-model="item.notes"
-                                        class="w-full text-[10px] text-gray-500 border rounded p-1" rows="2"
-                                        placeholder="Catatan/Deskripsi"></textarea>
+                                        class="w-full text-[10px] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 bg-transparent rounded p-1 focus:border-amber-500 focus:outline-none"
+                                        rows="2" placeholder="Catatan/Deskripsi"></textarea>
                                     <button @click="addProcess(itemIndex)"
-                                        class="mt-2 text-[10px] bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded w-full">+
+                                        class="mt-2 text-[10px] bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white py-1 rounded w-full no-print font-medium transition-all shadow-sm cursor-pointer">+
                                         Tambah Proses</button>
                                 </td>
 
                                 <!-- Detail Pekerjaan -->
-                                <td class="p-1 border border-gray-300">
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
                                     <div class="flex flex-col gap-1">
-                                        <input v-model="row.detail" class="w-full border px-1 py-0.5 rounded text-[11px]"
-                                            placeholder="Pekerjaan">
-                                        <select @change="selectMachineTemplate($event, row)" class="w-full border px-1 py-0.5 rounded bg-gray-50 text-[10px] text-gray-600 focus:outline-none focus:border-blue-400 no-print">
+                                        <input v-model="row.detail" class="table-input" placeholder="Pekerjaan">
+                                        <select @change="selectMachineTemplate($event, row)"
+                                            class="table-select no-print">
                                             <option value="">-- Pilih Mesin --</option>
                                             <option v-for="m in machines" :key="m.name" :value="m.name">
                                                 {{ m.name }} (Rp {{ formatNumber(m.rate) }})
@@ -233,138 +576,243 @@
                                 </td>
 
                                 <!-- Material Columns -->
-                                <td class="p-1 border border-gray-300"><input v-model="row.supplier"
-                                        class="w-full border px-1 py-0.5 rounded text-center text-[11px]" placeholder="MID"></td>
-                                <td class="p-1 border border-gray-300"><input type="number" v-model.number="row.matQty"
-                                        class="w-full border px-1 py-0.5 rounded text-right"></td>
-                                <td class="p-1 border border-gray-300"><input v-model="row.matUnit"
-                                        class="w-full border px-1 py-0.5 rounded text-center"></td>
-                                <td class="p-1 border border-gray-300 relative">
-                                    <input v-model="row.matName" @input="searchMaterial(row)" @focus="row.showSuggestions = true" @blur="hideSuggestionsWithDelay(row)"
-                                        class="w-full border px-1 py-0.5 rounded text-[11px]" placeholder="Nama Material" autocomplete="off">
+                                <td
+                                    class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400 relative">
+                                    <input v-model="row.matName" @input="searchMaterial(row)"
+                                        @focus="row.showSuggestions = true" @blur="hideSuggestionsWithDelay(row)"
+                                        class="table-input" placeholder="Nama Material" autocomplete="off">
                                     <!-- Floating Autocomplete Suggestions -->
-                                    <div v-if="row.showSuggestions && row.suggestions && row.suggestions.length > 0" 
-                                        class="absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-xl max-h-48 overflow-y-auto z-50 no-print text-[10px] text-left">
-                                        <div v-for="s in row.suggestions" :key="s.mid" @mousedown="selectMaterial(row, s)"
-                                            class="p-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 flex flex-col">
-                                            <span class="font-medium text-gray-800">{{ s.nama_material }}</span>
-                                            <span class="text-blue-600 font-mono mt-0.5 text-[9px]">MID: {{ s.mid }} | Rp{{ formatNumber(s.last_purchase) }}</span>
+                                    <div v-if="row.showSuggestions && row.suggestions && row.suggestions.length > 0"
+                                        class="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar z-50 no-print text-[10px] text-left">
+                                        <div v-for="s in row.suggestions" :key="s.mid"
+                                            @mousedown="selectMaterial(row, s)"
+                                            class="p-2 hover:bg-slate-50 dark:hover:bg-slate-700/60 cursor-pointer border-b border-slate-100 dark:border-slate-850 flex flex-col animate-fadeIn">
+                                            <span class="font-medium text-slate-800 dark:text-slate-200">{{
+                                                s.nama_material }}</span>
+                                            <span
+                                                class="text-blue-600 dark:text-blue-400 font-mono mt-0.5 text-[9px]">MID:
+                                                {{ s.mid }} | Rp{{ formatNumber(s.last_purchase) }}</span>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="p-1 border border-gray-300"><input type="number" v-model.number="row.matPrice"
-                                        class="w-full border px-1 py-0.5 rounded text-right"></td>
-                                <td class="p-1 border border-gray-300"><input type="number" step="0.1"
-                                        v-model.number="row.rfM" class="w-full border px-1 py-0.5 rounded text-center"></td>
-                                <td class="p-1 border border-gray-300 bg-green-50 text-right font-medium">
-                                    {{ formatNumber(calcRowMaterial(row)) }}
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input v-model="row.supplier" class="table-input text-center" placeholder="MID">
+                                </td>
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input type="text" v-model="row.matQty"
+                                        @blur="row.matQty = parseAndEvaluate(row.matQty)"
+                                        @keyup.enter="row.matQty = parseAndEvaluate(row.matQty); $event.target.blur()"
+                                        class="table-input text-right">
+                                </td>
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input v-model="row.matUnit" class="table-input text-center" placeholder="Satuan">
+                                </td>
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input type="number" v-model.number="row.matPrice" class="table-input text-right">
                                 </td>
 
-                                <!-- Labor & Machine Columns -->
-                                <td class="p-1 border border-gray-300"><input type="number" v-model.number="row.manpower"
-                                        class="w-full border px-1 py-0.5 rounded text-center"></td>
-                                <td class="p-1 border border-gray-300"><input type="number" step="0.5"
-                                        v-model.number="row.duration" class="w-full border px-1 py-0.5 rounded text-center">
+                                <!-- Manpower & Duration Columns -->
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input type="number" v-model.number="row.manpower" class="table-input text-center">
                                 </td>
-                                <td class="p-1 border border-gray-300"><input type="number" step="0.1"
-                                        v-model.number="row.rfO" class="w-full border px-1 py-0.5 rounded text-center"></td>
-                                <td class="p-1 border border-gray-300"><input type="number"
-                                        v-model.number="row.machineRatePerHour"
-                                        class="w-full border px-1 py-0.5 rounded text-right"></td>
-                                <td class="p-1 border border-gray-300 bg-blue-50 text-right font-medium">
-                                    {{ formatNumber(calcRowMachine(row)) }}
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input type="text" v-model="row.duration"
+                                        @blur="row.duration = parseAndEvaluate(row.duration)"
+                                        @keyup.enter="row.duration = parseAndEvaluate(row.duration); $event.target.blur()"
+                                        class="table-input text-center">
                                 </td>
-                                <td class="p-1 border border-gray-300 bg-blue-50 text-right font-medium">
-                                    {{ formatNumber(calcRowLabor(row)) }}
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input type="number" step="0.1" v-model.number="row.rfO"
+                                        class="table-input text-center">
                                 </td>
-                                <td class="p-1 border border-gray-300"><input type="number"
-                                        v-model.number="row.machineOpCost"
-                                        class="w-full border px-1 py-0.5 rounded text-right"></td>
-
-                                <!-- Total Per Proses -->
-                                <td class="p-1 border border-gray-300 bg-indigo-50 text-right font-bold">
-                                    {{ formatNumber(calcRowTotal(row)) }}
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input type="number" step="0.1" v-model.number="row.rfM"
+                                        class="table-input text-center">
+                                </td>
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input type="number" v-model.number="row.machineRatePerHour"
+                                        class="table-input text-right">
                                 </td>
 
-                                <!-- Summary per Item (Merged Rowspan) -->
-                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
-                                    class="p-1 border border-gray-300 align-middle text-center bg-purple-50">
-                                    <input type="number" v-model.number="item.qty"
-                                        class="w-12 border px-1 py-0.5 rounded text-center font-bold">
+                                <!-- Computed Row Costs -->
+                                <td
+                                    class="p-1 border border-slate-200 dark:border-slate-800 text-right font-medium bg-slate-50/30 dark:bg-slate-900/30 print:border-gray-400">
+                                    {{ calcRowMaterial(row) > 0 ? 'Rp ' + formatNumber(calcRowMaterial(row)) : '-' }}
                                 </td>
-                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
-                                    class="p-1 border border-gray-300 align-middle text-right bg-yellow-50 font-medium">
-                                    {{ formatNumber(calcItemTotalMaterial(item)) }}
+                                <td
+                                    class="p-1 border border-slate-200 dark:border-slate-800 text-right font-medium bg-slate-50/30 dark:bg-slate-900/30 print:border-gray-400">
+                                    {{ calcRowLabor(row) > 0 ? 'Rp ' + formatNumber(calcRowLabor(row)) : '-' }}
                                 </td>
-                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
-                                    class="p-1 border border-gray-300 align-middle text-right bg-yellow-50 font-medium">
-                                    {{ formatNumber(calcItemTotalLabor(item)) }}
+                                <td
+                                    class="p-1 border border-slate-200 dark:border-slate-800 text-right font-medium bg-slate-50/30 dark:bg-slate-900/30 print:border-gray-400">
+                                    {{ calcRowMachine(row) > 0 ? 'Rp ' + formatNumber(calcRowMachine(row)) : '-' }}
                                 </td>
+
+                                <!-- TOTAL PER PROSES (Merged per Component) -->
                                 <td v-if="rowIndex === 0" :rowspan="item.processes.length"
-                                    class="p-1 border border-gray-300 align-middle text-right bg-yellow-50 font-medium">
-                                    {{ formatNumber(calcItemTotalMachine(item)) }}
+                                    class="p-1 border border-slate-300 dark:border-slate-800 align-middle text-right bg-slate-50 dark:bg-slate-900/50 font-bold text-slate-800 dark:text-slate-200 print:border-gray-400 print:bg-white">
+                                    Rp {{ formatNumber(calcItemTotalPerProses(item)) }}
                                 </td>
+
+                                <!-- Component Qty (Merged per Component) -->
                                 <td v-if="rowIndex === 0" :rowspan="item.processes.length"
-                                    class="p-1 border border-gray-300 align-middle text-right bg-emerald-50 font-bold text-emerald-800 text-xs">
-                                    {{ formatNumber(calcItemGrandTotal(item)) }}
+                                    class="p-1 border border-slate-300 dark:border-slate-800 align-middle text-center bg-purple-50/10 dark:bg-purple-950/5 print:border-gray-400 print:bg-white">
+                                    <input type="text" v-model="item.qty" @blur="item.qty = parseAndEvaluate(item.qty)"
+                                        @keyup.enter="item.qty = parseAndEvaluate(item.qty); $event.target.blur()"
+                                        class="w-12 border border-slate-200 dark:border-slate-700 bg-transparent px-1 py-0.5 rounded text-center font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-500">
+                                </td>
+
+                                <!-- Summary Columns (NOT Merged) -->
+                                <td
+                                    class="p-1 border border-slate-200 dark:border-slate-800 text-right font-medium bg-blue-50/10 dark:bg-blue-950/5 print:border-gray-400 print:bg-white">
+                                    {{ (calcRowMaterial(row) * parseAndEvaluate(item.qty)) > 0 ? 'Rp ' +
+                                    formatNumber(calcRowMaterial(row) * parseAndEvaluate(item.qty)) : '' }}
+                                </td>
+                                <td
+                                    class="p-1 border border-slate-200 dark:border-slate-800 text-right font-medium bg-blue-50/10 dark:bg-blue-950/5 print:border-gray-400 print:bg-white">
+                                    {{ (calcRowLabor(row) * parseAndEvaluate(item.qty)) > 0 ? 'Rp ' +
+                                    formatNumber(calcRowLabor(row) * parseAndEvaluate(item.qty)) : '' }}
+                                </td>
+                                <td
+                                    class="p-1 border border-slate-200 dark:border-slate-800 text-right font-medium bg-blue-50/10 dark:bg-blue-950/5 print:border-gray-400 print:bg-white">
+                                    {{ (calcRowMachine(row) * parseAndEvaluate(item.qty)) > 0 ? 'Rp ' +
+                                    formatNumber(calcRowMachine(row) * parseAndEvaluate(item.qty)) : '' }}
+                                </td>
+
+                                <!-- JUMLAH (Merged per Component) -->
+                                <td v-if="rowIndex === 0" :rowspan="item.processes.length"
+                                    class="p-1 border border-slate-300 dark:border-slate-800 align-middle text-right bg-amber-50 dark:bg-amber-950/20 font-bold text-amber-800 dark:text-amber-400 text-xs print:border-gray-400 print:bg-white print:text-black">
+                                    Rp {{ formatNumber(calcItemGrandTotal(item)) }}
                                 </td>
 
                                 <!-- Action Delete Row -->
-                                <td class="p-1 border border-gray-300 text-center">
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 text-center no-print">
                                     <button @click="removeProcess(itemIndex, rowIndex)"
-                                        class="text-red-500 hover:text-red-700 font-bold px-1"
+                                        class="text-red-500 hover:text-red-700 dark:hover:text-red-400 font-bold px-1 transition-colors cursor-pointer"
                                         title="Hapus baris">×</button>
                                 </td>
                             </tr>
                         </template>
                     </tbody>
 
-                    <!-- Footer Grand Total -->
+                    <!-- Footer Totals -->
                     <tfoot>
-                        <tr class="bg-gray-800 text-white font-bold text-xs">
-                            <td colspan="18" class="p-2 text-right">GRAND TOTAL KESELURUHAN:</td>
-                            <td class="p-2 text-right bg-emerald-700 text-sm">Rp {{ formatNumber(grandTotal) }}</td>
-                            <td></td>
+                        <tr
+                            class="bg-slate-50 dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 font-bold text-xs">
+                            <td colspan="17"
+                                class="p-2 text-right border border-slate-300 dark:border-slate-850 print:border-gray-400">
+                                Total:</td>
+                            <td
+                                class="p-2 text-right bg-blue-50/50 dark:bg-blue-950/40 border border-slate-300 dark:border-slate-850 print:border-gray-400 print:bg-[#b4c6e7]">
+                                Rp {{ formatNumber(grandTotalMaterial) }}</td>
+                            <td
+                                class="p-2 text-right bg-blue-50/50 dark:bg-blue-950/40 border border-slate-300 dark:border-slate-850 print:border-gray-400 print:bg-[#b4c6e7]">
+                                Rp {{ formatNumber(grandTotalLabor) }}</td>
+                            <td
+                                class="p-2 text-right bg-blue-50/50 dark:bg-blue-950/40 border border-slate-300 dark:border-slate-850 print:border-gray-400 print:bg-[#b4c6e7]">
+                                Rp {{ formatNumber(grandTotalMachine) }}</td>
+                            <td
+                                class="p-2 text-right bg-amber-50 dark:bg-amber-950/20 text-sm border border-slate-300 dark:border-slate-850 print:border-gray-400 print:bg-[#ffd966] print:text-black">
+                                Rp {{ formatNumber(grandTotal) }}</td>
+                            <td class="no-print border border-slate-300 dark:border-slate-850 print:border-gray-400">
+                            </td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
 
             <!-- Seksi Approval / Persetujuan -->
-            <div class="mt-8 mb-6 w-full max-w-[800px] ml-auto border border-black font-sans text-[11px] no-print-bg">
+            <div
+                class="mt-8 mb-6 w-full max-w-[800px] ml-auto border border-slate-300 dark:border-slate-700 font-sans text-[11px] rounded-xl overflow-hidden shadow-sm print:border-black print:rounded-none print:shadow-none">
                 <div class="grid grid-cols-3">
                     <!-- Kolom Dibuat oleh -->
-                    <div class="border-r border-black flex flex-col justify-between">
-                        <div class="p-2.5 h-16 font-medium text-gray-700">Dibuat oleh,</div>
-                        <div class="border-t border-black p-2 bg-gray-50/30">
-                            <input v-model="approval.created" class="w-full bg-transparent border-none focus:outline-none font-semibold text-center text-gray-800 text-[11px]" placeholder="Ketik nama pembuat...">
+                    <div
+                        class="border-r border-slate-300 dark:border-slate-700 flex flex-col justify-between print:border-black">
+                        <div class="p-2.5 h-16 font-medium text-slate-500 dark:text-slate-400 print:text-black">Dibuat
+                            oleh,</div>
+                        <div
+                            class="border-t border-slate-200 dark:border-slate-800 p-2 bg-slate-50/50 dark:bg-slate-900/50 print:border-black print:bg-white">
+                            <input v-model="approval.created"
+                                class="w-full bg-transparent border-none focus:outline-none font-semibold text-center text-slate-800 dark:text-slate-100 text-[11px]"
+                                placeholder="Ketik nama pembuat...">
                         </div>
                     </div>
                     <!-- Kolom Dicek oleh -->
-                    <div class="border-r border-black flex flex-col justify-between">
-                        <div class="p-2.5 h-16 font-medium text-gray-700">Dicek oleh,</div>
-                        <div class="border-t border-black p-2 bg-gray-50/30">
-                            <input v-model="approval.checked" class="w-full bg-transparent border-none focus:outline-none font-semibold text-center text-gray-800 text-[11px]" placeholder="Ketik nama pemeriksa...">
+                    <div
+                        class="border-r border-slate-300 dark:border-slate-700 flex flex-col justify-between print:border-black">
+                        <div class="p-2.5 h-16 font-medium text-slate-500 dark:text-slate-400 print:text-black">Dicek
+                            oleh,</div>
+                        <div
+                            class="border-t border-slate-200 dark:border-slate-800 p-2 bg-slate-50/50 dark:bg-slate-900/50 print:border-black print:bg-white">
+                            <input v-model="approval.checked"
+                                class="w-full bg-transparent border-none focus:outline-none font-semibold text-center text-slate-800 dark:text-slate-100 text-[11px]"
+                                placeholder="Ketik nama pemeriksa...">
                         </div>
                     </div>
                     <!-- Kolom Disetujui oleh -->
                     <div class="flex flex-col justify-between">
-                        <div class="p-2.5 h-16 font-medium text-gray-700">Disetujui oleh,</div>
-                        <div class="border-t border-black p-2 bg-gray-50/30">
-                            <input v-model="approval.approved" class="w-full bg-transparent border-none focus:outline-none font-semibold text-center text-gray-800 text-[11px]" placeholder="Ketik nama penyetuju...">
+                        <div class="p-2.5 h-16 font-medium text-slate-500 dark:text-slate-400 print:text-black">
+                            Disetujui oleh,</div>
+                        <div
+                            class="border-t border-slate-200 dark:border-slate-800 p-2 bg-slate-50/50 dark:bg-slate-900/50 print:border-black print:bg-white">
+                            <input v-model="approval.approved"
+                                class="w-full bg-transparent border-none focus:outline-none font-semibold text-center text-slate-800 dark:text-slate-100 text-[11px]"
+                                placeholder="Ketik nama penyetuju...">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex gap-2 items-center">
-                <button @click="addItem"
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-xs font-semibold select-none">+ Tambah
-                    Komponen Baru</button>
-                <button onclick="window.print()"
-                    class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-xs font-semibold select-none">Cetak / Simpan
-                    PDF</button>
+            <!-- Action & Print Scaling Control -->
+            <div
+                class="flex flex-wrap gap-4 items-center justify-between no-print mt-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300">
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-2 items-center">
+                    <button @click="addItem"
+                        class="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">+
+                        Tambah Komponen Baru</button>
+                    <button @click="exportToExcel"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold select-none flex items-center gap-1.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        Ekspor ke Excel
+                    </button>
+                    <button onclick="window.print()"
+                        class="bg-slate-600 hover:bg-slate-700 dark:bg-slate-750 dark:hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">Cetak
+                        / Simpan PDF</button>
+
+                    <!-- Reset Data Button -->
+                    <button @click="resetData"
+                        class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 px-4 py-2 rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                        Reset Data
+                    </button>
+                </div>
+
+                <!-- Print Scale Slider -->
+                <div
+                    class="flex items-center gap-3 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-inner text-xs">
+                    <span class="font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                        <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
+                        </svg>
+                        Skala PDF / Cetak:
+                    </span>
+                    <input type="range" min="30" max="100" step="1" v-model.number="printZoom"
+                        class="w-32 accent-emerald-500 cursor-pointer">
+                    <span class="font-bold text-emerald-600 dark:text-emerald-400 w-10 text-right">{{ printZoom
+                        }}%</span>
+                </div>
             </div>
 
         </div>
@@ -378,6 +826,8 @@
             data() {
                 return {
                     isLoggedIn: false,
+                    darkMode: false,
+                    printZoom: 60,
                     approval: {
                         created: 'Heristo Bramastra Gifary',
                         checked: 'Singgih Andriyanto',
@@ -470,41 +920,74 @@
                 }
             },
             computed: {
+                grandTotalMaterial() {
+                    return this.items.reduce((sum, item) => {
+                        const itemQty = this.parseAndEvaluate(item.qty);
+                        return sum + item.processes.reduce((s, p) => s + this.calcRowMaterial(p) * itemQty, 0);
+                    }, 0);
+                },
+                grandTotalLabor() {
+                    return this.items.reduce((sum, item) => {
+                        const itemQty = this.parseAndEvaluate(item.qty);
+                        return sum + item.processes.reduce((s, p) => s + this.calcRowLabor(p) * itemQty, 0);
+                    }, 0);
+                },
+                grandTotalMachine() {
+                    return this.items.reduce((sum, item) => {
+                        const itemQty = this.parseAndEvaluate(item.qty);
+                        return sum + item.processes.reduce((s, p) => s + this.calcRowMachine(p) * itemQty, 0);
+                    }, 0);
+                },
                 grandTotal() {
-                    return this.items.reduce((sum, item) => sum + this.calcItemGrandTotal(item), 0);
+                    return this.grandTotalMaterial + this.grandTotalLabor + this.grandTotalMachine;
                 }
             },
             methods: {
                 // Perhitungan per Baris Proses
+                parseAndEvaluate(val) {
+                    if (val === undefined || val === null) return 0;
+                    let str = String(val).trim();
+                    if (!str) return 0;
+
+                    if (str.startsWith('=')) {
+                        str = str.substring(1).trim();
+                    }
+
+                    const cleanExpr = str.replace(/,/g, '.');
+
+                    if (/^[0-9+\-*/().\s]+$/.test(cleanExpr)) {
+                        try {
+                            const result = Function(`"use strict"; return (${cleanExpr})`)();
+                            if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
+                                return Math.round(result * 10000) / 10000;
+                            }
+                        } catch (e) {
+                            // ignore, fallback to parseFloat
+                        }
+                    }
+
+                    const parsed = parseFloat(cleanExpr);
+                    return isNaN(parsed) ? 0 : parsed;
+                },
                 calcRowMaterial(row) {
-                    return (row.matQty || 0) * (row.matPrice || 0) * (row.rfM || 1);
+                    return this.parseAndEvaluate(row.matQty) * (row.matPrice || 0) * (row.rfM || 1);
                 },
                 calcRowMachine(row) {
-                    return (row.machineRatePerHour || 0) * (row.duration || 0) * (row.rfO || 1);
+                    return (row.machineRatePerHour || 0) * this.parseAndEvaluate(row.duration) * (row.rfO || 1);
                 },
                 calcRowLabor(row) {
-                    return (row.manpower || 0) * (row.duration || 0) * (this.laborRatePerHour || 0);
+                    return (row.manpower || 0) * this.parseAndEvaluate(row.duration) * (this.laborRatePerHour || 0);
                 },
                 calcRowTotal(row) {
-                    return this.calcRowMaterial(row) + this.calcRowMachine(row) + this.calcRowLabor(row) + (row.machineOpCost || 0);
+                    return this.calcRowMaterial(row) + this.calcRowMachine(row) + this.calcRowLabor(row);
                 },
 
                 // Perhitungan Agregat per Komponen Item
-                calcItemTotalMaterial(item) {
-                    const subtotal = item.processes.reduce((sum, p) => sum + this.calcRowMaterial(p), 0);
-                    return subtotal * (item.qty || 1);
-                },
-                calcItemTotalLabor(item) {
-                    const subtotal = item.processes.reduce((sum, p) => sum + this.calcRowLabor(p), 0);
-                    return subtotal * (item.qty || 1);
-                },
-                calcItemTotalMachine(item) {
-                    const subtotal = item.processes.reduce((sum, p) => sum + (this.calcRowMachine(p) + (p.machineOpCost || 0)), 0);
-                    return subtotal * (item.qty || 1);
+                calcItemTotalPerProses(item) {
+                    return item.processes.reduce((sum, p) => sum + this.calcRowTotal(p), 0);
                 },
                 calcItemGrandTotal(item) {
-                    const subtotal = item.processes.reduce((sum, p) => sum + this.calcRowTotal(p), 0);
-                    return subtotal * (item.qty || 1);
+                    return this.calcItemTotalPerProses(item) * this.parseAndEvaluate(item.qty);
                 },
 
                 // Manipulasi Baris & Komponen
@@ -567,6 +1050,34 @@
                     localStorage.removeItem('isLoggedIn');
                     this.loginUsername = '';
                     this.loginPassword = '';
+                },
+                toggleDarkMode() {
+                    this.darkMode = !this.darkMode;
+                    localStorage.setItem('darkMode', this.darkMode ? 'true' : 'false');
+                    if (this.darkMode) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                },
+                resetData() {
+                    if (confirm('Apakah Anda yakin ingin menghapus semua data dan mengosongkan kalkulator?')) {
+                        this.project.name = '';
+                        this.project.company = '';
+                        this.project.pic = '';
+                        this.items = [
+                            {
+                                id: Date.now(),
+                                name: '',
+                                notes: '',
+                                qty: 1,
+                                processes: [this.createEmptyProcess()]
+                            }
+                        ];
+                        this.approval.created = '';
+                        this.approval.checked = '';
+                        this.approval.approved = '';
+                    }
                 },
                 selectMachineTemplate(event, row) {
                     const selectedName = event.target.value;
@@ -679,6 +1190,198 @@
                             e.preventDefault();
                         });
                     });
+                },
+                exportToExcel() {
+                    // Buat workbook & worksheet baru
+                    const wb = XLSX.utils.book_new();
+
+                    const wsData = [
+                        ["Unit/Project Name", this.project.name || "", "", "", "Biaya Tenaga Kerja/Jam", this.laborRatePerHour || 0],
+                        ["Company", this.project.company || ""],
+                        ["Penanggung Jawab", this.project.pic || ""],
+                        [], // baris kosong
+                        [
+                            "Aktivitas",          // A
+                            "Detail Informasi",   // B
+                            "Material",           // C (colspan 5, D-G blank)
+                            "",                   // D
+                            "",                   // E
+                            "",                   // F
+                            "",                   // G
+                            "Manpower",           // H
+                            "Durasi (Jam)",       // I
+                            "RF.O",               // J
+                            "RF.M",               // K
+                            "Biaya mesin/Jam",    // L
+                            "Biaya Material",     // M
+                            "Biaya Tenaga Kerja", // N
+                            "Operasional Mesin",  // O
+                            "TOTAL PER PROSES",   // P
+                            "QTY",                // Q
+                            "Jumlah Biaya Material",          // R
+                            "Jumlah Biaya Tenaga Kerja",      // S
+                            "Jumlah Biaya Operasional Mesin", // T
+                            "JUMLAH"              // U
+                        ],
+                        [
+                            "", "", // A, B merged
+                            "Nama Material",      // C
+                            "MID",                // D
+                            "Qty",                // E
+                            "Satuan",             // F
+                            "Harga Satuan",       // G
+                            "", "", "", "", "", "", "", "", "", "", "", "", "", "", // H to U merged with row above
+                        ]
+                    ];
+
+                    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                    // Pemuatan format nomor pada sel F1 (Labor Rate per Jam)
+                    if (ws['F1']) ws['F1'].z = '#,##0';
+
+                    let currentRow = 7; // Baris data pertama di Excel (Row 7)
+
+                    this.items.forEach(item => {
+                        const startRow = currentRow;
+                        const numProcesses = item.processes.length;
+                        const endRow = startRow + numProcesses - 1;
+
+                        item.processes.forEach((p, idx) => {
+                            const r = currentRow;
+
+                            const rowData = {
+                                A: idx === 0 ? (item.name || "Komponen") : "",
+                                B: p.detail || "",
+                                C: p.matName || "",
+                                D: p.supplier || "",
+                                E: this.parseAndEvaluate(p.matQty),
+                                F: p.matUnit || "",
+                                G: p.matPrice || 0,
+                                H: p.manpower || 0,
+                                I: this.parseAndEvaluate(p.duration),
+                                J: p.rfO || 1,
+                                K: p.rfM || 1,
+                                L: p.machineRatePerHour || 0,
+                                Q: idx === 0 ? this.parseAndEvaluate(item.qty) : ""
+                            };
+
+                            // Tambahkan baris data
+                            XLSX.utils.sheet_add_aoa(ws, [[
+                                rowData.A, rowData.B, rowData.C, rowData.D, rowData.E, rowData.F, rowData.G, rowData.H,
+                                rowData.I, rowData.J, rowData.K, rowData.L,
+                                0, // Placeholder Biaya Material (M)
+                                0, // Placeholder Biaya Tenaga Kerja (N)
+                                0, // Placeholder Operasional Mesin (O)
+                                0, // Placeholder TOTAL PER PROSES (P)
+                                rowData.Q,
+                                0, // Placeholder Jumlah Biaya Material (R)
+                                0, // Placeholder Jumlah Biaya Tenaga Kerja (S)
+                                0, // Placeholder Jumlah Biaya Operasional Mesin (T)
+                                0  // Placeholder JUMLAH (U)
+                            ]], { origin: `A${r}` });
+
+                            // Terapkan format mata uang untuk kolom input angka harga
+                            const formatInputCell = (col) => {
+                                if (ws[`${col}${r}`]) ws[`${col}${r}`].z = '#,##0';
+                            };
+                            formatInputCell('G'); // Harga Satuan
+                            formatInputCell('L'); // Biaya mesin/Jam
+
+                            // Setel Rumus Dinamis Excel
+                            ws[`M${r}`] = { f: `E${r}*G${r}*K${r}`, z: '#,##0' };
+                            ws[`N${r}`] = { f: `H${r}*I${r}*$F$1`, z: '#,##0' };
+                            ws[`O${r}`] = { f: `I${r}*L${r}*J${r}`, z: '#,##0' };
+
+                            // Jumlah Biaya per Baris
+                            ws[`R${r}`] = { f: `M${r}*$Q$${startRow}`, z: '#,##0' };
+                            ws[`S${r}`] = { f: `N${r}*$Q$${startRow}`, z: '#,##0' };
+                            ws[`T${r}`] = { f: `O${r}*$Q$${startRow}`, z: '#,##0' };
+
+                            if (idx === 0) {
+                                ws[`P${r}`] = { f: `SUM(M${startRow}:M${endRow})+SUM(N${startRow}:N${endRow})+SUM(O${startRow}:O${endRow})`, z: '#,##0' };
+                                ws[`U${r}`] = { f: `P${startRow}*Q${startRow}`, z: '#,##0' };
+                            } else {
+                                // Hapus nilai default 0 untuk baris selain baris pertama komponen
+                                delete ws[`P${r}`];
+                                delete ws[`U${r}`];
+                            }
+
+                            currentRow++;
+                        });
+
+                        // Gabungkan sel (merge) jika proses komponen > 1
+                        if (numProcesses > 1) {
+                            if (!ws['!merges']) ws['!merges'] = [];
+                            ws['!merges'].push({ s: { r: startRow - 1, c: 0 }, e: { r: endRow - 1, c: 0 } });   // Aktivitas
+                            ws['!merges'].push({ s: { r: startRow - 1, c: 15 }, e: { r: endRow - 1, c: 15 } }); // TOTAL PER PROSES
+                            ws['!merges'].push({ s: { r: startRow - 1, c: 16 }, e: { r: endRow - 1, c: 16 } }); // QTY
+                            ws['!merges'].push({ s: { r: startRow - 1, c: 20 }, e: { r: endRow - 1, c: 20 } }); // JUMLAH
+                        }
+                    });
+
+                    // Tambahkan merges untuk header bertingkat
+                    if (!ws['!merges']) ws['!merges'] = [];
+                    ws['!merges'].push({ s: { r: 4, c: 0 }, e: { r: 5, c: 0 } }); // Aktivitas
+                    ws['!merges'].push({ s: { r: 4, c: 1 }, e: { r: 5, c: 1 } }); // Detail Informasi
+                    ws['!merges'].push({ s: { r: 4, c: 2 }, e: { r: 4, c: 6 } }); // Material (Header Group)
+                    ws['!merges'].push({ s: { r: 4, c: 7 }, e: { r: 5, c: 7 } }); // Manpower
+                    ws['!merges'].push({ s: { r: 4, c: 8 }, e: { r: 5, c: 8 } }); // Durasi
+                    ws['!merges'].push({ s: { r: 4, c: 9 }, e: { r: 5, c: 9 } }); // RF.O
+                    ws['!merges'].push({ s: { r: 4, c: 10 }, e: { r: 5, c: 10 } }); // RF.M
+                    ws['!merges'].push({ s: { r: 4, c: 11 }, e: { r: 5, c: 11 } }); // Biaya mesin/Jam
+                    ws['!merges'].push({ s: { r: 4, c: 12 }, e: { r: 5, c: 12 } }); // Biaya Material
+                    ws['!merges'].push({ s: { r: 4, c: 13 }, e: { r: 5, c: 13 } }); // Biaya Tenaga Kerja
+                    ws['!merges'].push({ s: { r: 4, c: 14 }, e: { r: 5, c: 14 } }); // Operasional Mesin
+                    ws['!merges'].push({ s: { r: 4, c: 15 }, e: { r: 5, c: 15 } }); // TOTAL PER PROSES
+                    ws['!merges'].push({ s: { r: 4, c: 16 }, e: { r: 5, c: 16 } }); // QTY
+                    ws['!merges'].push({ s: { r: 4, c: 17 }, e: { r: 5, c: 17 } }); // Jumlah Biaya Material
+                    ws['!merges'].push({ s: { r: 4, c: 18 }, e: { r: 5, c: 18 } }); // Jumlah Biaya Tenaga Kerja
+                    ws['!merges'].push({ s: { r: 4, c: 19 }, e: { r: 5, c: 19 } }); // Jumlah Biaya Operasional Mesin
+                    ws['!merges'].push({ s: { r: 4, c: 20 }, e: { r: 5, c: 20 } }); // JUMLAH
+
+                    // Baris Total di bagian bawah
+                    const totalRow = currentRow;
+                    XLSX.utils.sheet_add_aoa(ws, [[
+                        "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 0, 0, 0, 0
+                    ]], { origin: `A${totalRow}` });
+
+                    // Rumus Total bawah
+                    ws[`R${totalRow}`] = { f: `SUM(R7:R${totalRow - 1})`, z: '#,##0' };
+                    ws[`S${totalRow}`] = { f: `SUM(S7:S${totalRow - 1})`, z: '#,##0' };
+                    ws[`T${totalRow}`] = { f: `SUM(T7:T${totalRow - 1})`, z: '#,##0' };
+                    ws[`U${totalRow}`] = { f: `SUM(U7:U${totalRow - 1})`, z: '#,##0' };
+
+                    // Atur Lebar Kolom
+                    ws['!cols'] = [
+                        { wch: 25 }, // A: Aktivitas
+                        { wch: 22 }, // B: Detail Informasi
+                        { wch: 25 }, // C: Nama Material
+                        { wch: 15 }, // D: MID
+                        { wch: 8 },  // E: Qty
+                        { wch: 8 },  // F: Satuan
+                        { wch: 15 }, // G: Harga Satuan
+                        { wch: 10 }, // H: Manpower
+                        { wch: 12 }, // I: Durasi (Jam)
+                        { wch: 6 },  // J: RF.O
+                        { wch: 6 },  // K: RF.M
+                        { wch: 18 }, // L: Biaya mesin/Jam
+                        { wch: 16 }, // M: Biaya Material
+                        { wch: 18 }, // N: Biaya Tenaga Kerja
+                        { wch: 18 }, // O: Operasional Mesin
+                        { wch: 20 }, // P: TOTAL PER PROSES
+                        { wch: 8 },  // Q: QTY
+                        { wch: 20 }, // R: Jumlah Biaya Material
+                        { wch: 22 }, // S: Jumlah Biaya Tenaga Kerja
+                        { wch: 26 }, // T: Jumlah Biaya Operasional Mesin
+                        { wch: 20 }  // U: JUMLAH
+                    ];
+
+                    // Masukkan ke workbook
+                    XLSX.utils.book_append_sheet(wb, ws, "Actual Cost");
+
+                    // Tentukan nama berkas
+                    const fileNameClean = (this.project.name || "cost_analysis").replace(/[^a-zA-Z0-9]/g, "_");
+                    XLSX.writeFile(wb, `Actual_Cost_${fileNameClean}.xlsx`);
                 }
             },
             watch: {
@@ -707,6 +1410,14 @@
             created() {
                 if (localStorage.getItem('isLoggedIn') === 'true') {
                     this.isLoggedIn = true;
+                }
+                // Initialize dark mode theme
+                if (localStorage.getItem('darkMode') === 'true') {
+                    this.darkMode = true;
+                    document.documentElement.classList.add('dark');
+                } else if (localStorage.getItem('darkMode') === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    this.darkMode = true;
+                    document.documentElement.classList.add('dark');
                 }
                 // Auto-load master_mid (8).json
                 fetch('master_mid (8).json')
