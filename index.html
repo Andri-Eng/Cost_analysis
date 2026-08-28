@@ -403,7 +403,7 @@
                             <button @click="exportToExcel(); showFileMenu = false" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
                                 <span>📈</span> Ekspor ke Excel
                             </button>
-                            <button @click="window.print(); showFileMenu = false" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                            <button @click="printPage" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
                                 <span>📄</span> Cetak / Simpan PDF
                             </button>
                         </div>
@@ -1264,6 +1264,12 @@
                     if (container && !container.contains(event.target)) {
                         this.showFileMenu = false;
                     }
+                },
+                printPage() {
+                    this.showFileMenu = false;
+                    this.$nextTick(() => {
+                        window.print();
+                    });
                 },
                 selectMachineTemplate(event, row) {
                     const selectedName = event.target.value;
