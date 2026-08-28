@@ -371,6 +371,44 @@
                 </div>
 
                 <div class="flex items-center gap-2">
+                    <!-- File Menu Dropdown -->
+                    <div class="relative" id="fileMenuContainer">
+                        <button @click="showFileMenu = !showFileMenu"
+                            class="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer font-bold text-[10px]"
+                            title="Menu File">
+                            <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            File
+                            <svg class="w-3.5 h-3.5 transition-transform" :class="{'rotate-180': showFileMenu}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <!-- Dropdown Menu -->
+                        <div v-if="showFileMenu"
+                            class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-[100] py-1 text-slate-700 dark:text-slate-200 font-semibold text-[11px] animate-fadeIn">
+                            <button @click="triggerNewProject" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                                <span>➕</span> Proyek Baru (Reset)
+                            </button>
+                            <button @click="triggerSaveProject" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                                <span>💾</span> Simpan Proyek (Save)
+                            </button>
+                            <button @click="triggerSaveProjectAs" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                                <span>📝</span> Simpan Sebagai... (Save As)
+                            </button>
+                            <button @click="showOpenProjectModal = true; showFileMenu = false" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                                <span>📂</span> Buka Proyek (Open)
+                            </button>
+                            <hr class="border-slate-100 dark:border-slate-800/60 my-1">
+                            <button @click="exportToExcel(); showFileMenu = false" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                                <span>📈</span> Ekspor ke Excel
+                            </button>
+                            <button @click="window.print(); showFileMenu = false" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                                <span>📄</span> Cetak / Simpan PDF
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Theme Switcher Button -->
                     <button @click="toggleDarkMode"
                         class="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 p-1.5 rounded-xl transition-all shadow-sm flex items-center justify-center cursor-pointer"
@@ -771,30 +809,6 @@
                     <button @click="addItem"
                         class="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">+
                         Tambah Komponen Baru</button>
-                    <button @click="exportToExcel"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold select-none flex items-center gap-1.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                            </path>
-                        </svg>
-                        Ekspor ke Excel
-                    </button>
-                    <button onclick="window.print()"
-                        class="bg-slate-600 hover:bg-slate-700 dark:bg-slate-750 dark:hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">Cetak
-                        / Simpan PDF</button>
-
-                    <!-- Reset Data Button -->
-                    <button @click="resetData"
-                        class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/80 px-4 py-2 rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                            </path>
-                        </svg>
-                        Reset Data
-                    </button>
                 </div>
 
                 <!-- Print Scale Slider -->
@@ -815,11 +829,90 @@
                 </div>
             </div>
 
+            <!-- Modal Buka Proyek (Open Project Modal) -->
+            <div v-if="showOpenProjectModal" 
+                class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 no-print">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl flex flex-col max-h-[80vh] font-sans">
+                    <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                        <h3 class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <span>📂</span> Daftar Proyek Tersimpan
+                        </h3>
+                        <button @click="showOpenProjectModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer">&times;</button>
+                    </div>
+                    
+                    <div class="overflow-y-auto custom-scrollbar flex-1 pr-1">
+                        <div v-if="savedProjects.length === 0" class="text-center py-8 text-slate-500 dark:text-slate-400 text-[11px]">
+                            Tidak ada proyek yang tersimpan di browser ini.
+                        </div>
+                        <div v-else class="flex flex-col gap-2">
+                            <div v-for="p in savedProjects" :key="p.id" 
+                                class="flex justify-between items-center p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all">
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="font-bold text-[11px] text-slate-800 dark:text-slate-200">{{ p.name }}</span>
+                                    <span class="text-[9px] text-slate-400 dark:text-slate-500">Tersimpan: {{ p.date }}</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button @click="loadProject(p)" 
+                                        class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-3 py-1.5 rounded-lg transition-all shadow-sm cursor-pointer">
+                                        Buka
+                                    </button>
+                                    <button @click="deleteProject(p.id)" 
+                                        class="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-100 dark:border-red-900/40 text-[10px] px-2 py-1.5 rounded-lg transition-all cursor-pointer">
+                                        Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                        <button @click="showOpenProjectModal = false" 
+                            class="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-xl text-[10px] font-bold select-none shadow-sm transition-all duration-200 cursor-pointer">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     </div>
 
     <script>
+        // Helper untuk akses Storage secara aman (menghindari error SecurityError di file:// browser tertentu)
+        const safeStorage = {
+            getItem(key, isSession = false) {
+                try {
+                    return isSession ? sessionStorage.getItem(key) : localStorage.getItem(key);
+                } catch (e) {
+                    console.warn(`Gagal membaca ${key} dari storage:`, e);
+                    return null;
+                }
+            },
+            setItem(key, value, isSession = false) {
+                try {
+                    if (isSession) {
+                        sessionStorage.setItem(key, value);
+                    } else {
+                        localStorage.setItem(key, value);
+                    }
+                } catch (e) {
+                    console.warn(`Gagal menulis ${key} ke storage:`, e);
+                }
+            },
+            removeItem(key, isSession = false) {
+                try {
+                    if (isSession) {
+                        sessionStorage.removeItem(key);
+                    } else {
+                        localStorage.removeItem(key);
+                    }
+                } catch (e) {
+                    console.warn(`Gagal menghapus ${key} dari storage:`, e);
+                }
+            }
+        };
+
         const { createApp } = Vue;
 
         createApp({
@@ -828,6 +921,10 @@
                     isLoggedIn: false,
                     darkMode: false,
                     printZoom: 60,
+                    showFileMenu: false,
+                    showOpenProjectModal: false,
+                    savedProjects: [],
+                    currentProjectId: null,
                     approval: {
                         created: 'Heristo Bramastra Gifary',
                         checked: 'Singgih Andriyanto',
@@ -1038,30 +1135,29 @@
                     if (this.loginUsername === 'admin' && this.loginPassword === 'admin123') {
                         this.isLoggedIn = true;
                         this.loginError = '';
-                        if (this.rememberMe) {
-                            localStorage.setItem('isLoggedIn', 'true');
-                        }
+                        // Simpan login status di localStorage agar selalu bertahan pada protokol file://
+                        safeStorage.setItem('isLoggedIn', 'true');
                     } else {
                         this.loginError = 'Username atau password salah!';
                     }
                 },
                 logout() {
                     this.isLoggedIn = false;
-                    localStorage.removeItem('isLoggedIn');
+                    safeStorage.removeItem('isLoggedIn');
                     this.loginUsername = '';
                     this.loginPassword = '';
                 },
                 toggleDarkMode() {
                     this.darkMode = !this.darkMode;
-                    localStorage.setItem('darkMode', this.darkMode ? 'true' : 'false');
+                    safeStorage.setItem('darkMode', this.darkMode ? 'true' : 'false');
                     if (this.darkMode) {
                         document.documentElement.classList.add('dark');
                     } else {
                         document.documentElement.classList.remove('dark');
                     }
                 },
-                resetData() {
-                    if (confirm('Apakah Anda yakin ingin menghapus semua data dan mengosongkan kalkulator?')) {
+                triggerNewProject() {
+                    if (confirm('Apakah Anda yakin ingin membuat proyek baru? Data di kalkulator saat ini akan dikosongkan.')) {
                         this.project.name = '';
                         this.project.company = '';
                         this.project.pic = '';
@@ -1077,6 +1173,96 @@
                         this.approval.created = '';
                         this.approval.checked = '';
                         this.approval.approved = '';
+                        this.currentProjectId = null;
+                        safeStorage.removeItem('currentProjectId');
+                        this.showFileMenu = false;
+                    }
+                },
+                triggerSaveProject() {
+                    this.showFileMenu = false;
+                    if (this.currentProjectId) {
+                        const index = this.savedProjects.findIndex(p => p.id === this.currentProjectId);
+                        if (index !== -1) {
+                            const now = new Date();
+                            const dateStr = now.toLocaleDateString('id-ID') + ' ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                            
+                            this.savedProjects[index].name = this.project.name || 'Proyek Tanpa Nama';
+                            this.savedProjects[index].date = dateStr;
+                            this.savedProjects[index].data = {
+                                project: JSON.parse(JSON.stringify(this.project)),
+                                items: JSON.parse(JSON.stringify(this.items)),
+                                approval: JSON.parse(JSON.stringify(this.approval)),
+                                laborRatePerHour: this.laborRatePerHour
+                            };
+                            
+                            safeStorage.setItem('savedProjects', JSON.stringify(this.savedProjects));
+                            alert(`✅ Proyek "${this.project.name || 'Proyek Tanpa Nama'}" berhasil diperbarui!`);
+                            return;
+                        }
+                    }
+                    this.triggerSaveProjectAs();
+                },
+                triggerSaveProjectAs() {
+                    this.showFileMenu = false;
+                    const defaultName = this.project.name || 'Proyek Baru';
+                    const name = prompt('Masukkan nama proyek untuk disimpan:', defaultName);
+                    if (name === null) return;
+                    
+                    const cleanName = name.trim() || 'Proyek Tanpa Nama';
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('id-ID') + ' ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                    
+                    const newId = Date.now();
+                    const newProject = {
+                        id: newId,
+                        name: cleanName,
+                        date: dateStr,
+                        data: {
+                            project: JSON.parse(JSON.stringify(this.project)),
+                            items: JSON.parse(JSON.stringify(this.items)),
+                            approval: JSON.parse(JSON.stringify(this.approval)),
+                            laborRatePerHour: this.laborRatePerHour
+                        }
+                    };
+                    
+                    this.savedProjects.push(newProject);
+                    this.currentProjectId = newId;
+                    this.project.name = cleanName;
+                    
+                    safeStorage.setItem('savedProjects', JSON.stringify(this.savedProjects));
+                    safeStorage.setItem('currentProjectId', newId);
+                    alert(`✅ Proyek "${cleanName}" berhasil disimpan!`);
+                },
+                loadProject(proj) {
+                    if (confirm(`Apakah Anda yakin ingin memuat proyek "${proj.name}"? Data di kalkulator saat ini akan diganti.`)) {
+                        this.project = JSON.parse(JSON.stringify(proj.data.project));
+                        this.items = JSON.parse(JSON.stringify(proj.data.items));
+                        this.approval = JSON.parse(JSON.stringify(proj.data.approval));
+                        this.laborRatePerHour = proj.data.laborRatePerHour;
+                        this.currentProjectId = proj.id;
+                        
+                        safeStorage.setItem('currentProjectId', proj.id);
+                        this.showOpenProjectModal = false;
+                        alert(`✅ Proyek "${proj.name}" berhasil dimuat!`);
+                    }
+                },
+                deleteProject(id) {
+                    const proj = this.savedProjects.find(p => p.id === id);
+                    const name = proj ? proj.name : 'ini';
+                    if (confirm(`Apakah Anda yakin ingin menghapus proyek "${name}"?`)) {
+                        this.savedProjects = this.savedProjects.filter(p => p.id !== id);
+                        safeStorage.setItem('savedProjects', JSON.stringify(this.savedProjects));
+                        
+                        if (this.currentProjectId === id) {
+                            this.currentProjectId = null;
+                            safeStorage.removeItem('currentProjectId');
+                        }
+                    }
+                },
+                closeFileMenuOnClickOutside(event) {
+                    const container = document.getElementById('fileMenuContainer');
+                    if (container && !container.contains(event.target)) {
+                        this.showFileMenu = false;
                     }
                 },
                 selectMachineTemplate(event, row) {
@@ -1391,6 +1577,46 @@
                             this.initResizableColumns();
                         });
                     }
+                },
+                rememberMe(val) {
+                    safeStorage.setItem('rememberMe', val ? 'true' : 'false');
+                },
+                project: {
+                    handler(val) {
+                        safeStorage.setItem('project', JSON.stringify(val));
+                    },
+                    deep: true
+                },
+                items: {
+                    handler(val) {
+                        safeStorage.setItem('items', JSON.stringify(val));
+                    },
+                    deep: true
+                },
+                approval: {
+                    handler(val) {
+                        safeStorage.setItem('approval', JSON.stringify(val));
+                    },
+                    deep: true
+                },
+                laborRatePerHour(val) {
+                    safeStorage.setItem('laborRatePerHour', val);
+                },
+                printZoom(val) {
+                    safeStorage.setItem('printZoom', val);
+                },
+                currentProjectId(val) {
+                    if (val === null) {
+                        safeStorage.removeItem('currentProjectId');
+                    } else {
+                        safeStorage.setItem('currentProjectId', val);
+                    }
+                },
+                savedProjects: {
+                    handler(val) {
+                        safeStorage.setItem('savedProjects', JSON.stringify(val));
+                    },
+                    deep: true
                 }
             },
             mounted() {
@@ -1399,6 +1625,8 @@
                         this.initResizableColumns();
                     });
                 }
+                // Add listener to close dropdown on click outside
+                window.addEventListener('click', this.closeFileMenuOnClickOutside);
             },
             updated() {
                 if (this.isLoggedIn) {
@@ -1408,14 +1636,76 @@
                 }
             },
             created() {
-                if (localStorage.getItem('isLoggedIn') === 'true') {
+                // Tentukan status login berdasarkan localStorage
+                // Ini mencegah user ter-logout saat refresh di protokol file:// (local file)
+                if (safeStorage.getItem('isLoggedIn') === 'true') {
                     this.isLoggedIn = true;
                 }
+
+                // Load saved project data from localStorage
+                const savedProject = safeStorage.getItem('project');
+                if (savedProject) {
+                    try {
+                        const parsed = JSON.parse(savedProject);
+                        if (parsed && typeof parsed === 'object') {
+                            this.project = parsed;
+                        }
+                    } catch(e) {
+                        console.error("Error parsing saved project:", e);
+                    }
+                }
+                const savedItems = safeStorage.getItem('items');
+                if (savedItems) {
+                    try {
+                        const parsed = JSON.parse(savedItems);
+                        if (Array.isArray(parsed)) {
+                            this.items = parsed;
+                        }
+                    } catch(e) {
+                        console.error("Error parsing saved items:", e);
+                    }
+                }
+                const savedApproval = safeStorage.getItem('approval');
+                if (savedApproval) {
+                    try {
+                        const parsed = JSON.parse(savedApproval);
+                        if (parsed && typeof parsed === 'object') {
+                            this.approval = parsed;
+                        }
+                    } catch(e) {
+                        console.error("Error parsing saved approval:", e);
+                    }
+                }
+                const savedLaborRate = safeStorage.getItem('laborRatePerHour');
+                if (savedLaborRate) {
+                    this.laborRatePerHour = Number(savedLaborRate);
+                }
+                const savedPrintZoom = safeStorage.getItem('printZoom');
+                if (savedPrintZoom) {
+                    this.printZoom = Number(savedPrintZoom);
+                }
+                const savedRememberMe = safeStorage.getItem('rememberMe');
+                if (savedRememberMe !== null) {
+                    this.rememberMe = savedRememberMe === 'true';
+                }
+                // Load list of saved projects
+                const projectsRaw = safeStorage.getItem('savedProjects');
+                if (projectsRaw) {
+                    try {
+                        this.savedProjects = JSON.parse(projectsRaw) || [];
+                    } catch (e) {
+                        console.error("Error parsing saved projects:", e);
+                    }
+                }
+                const savedCurrentProjId = safeStorage.getItem('currentProjectId');
+                if (savedCurrentProjId) {
+                    this.currentProjectId = Number(savedCurrentProjId);
+                }
                 // Initialize dark mode theme
-                if (localStorage.getItem('darkMode') === 'true') {
+                if (safeStorage.getItem('darkMode') === 'true') {
                     this.darkMode = true;
                     document.documentElement.classList.add('dark');
-                } else if (localStorage.getItem('darkMode') === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                } else if (safeStorage.getItem('darkMode') === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                     this.darkMode = true;
                     document.documentElement.classList.add('dark');
                 }
