@@ -386,18 +386,22 @@
                         </button>
                         <!-- Dropdown Menu -->
                         <div v-if="showFileMenu"
-                            class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-[100] py-1 text-slate-700 dark:text-slate-200 font-semibold text-[11px] animate-fadeIn">
+                            class="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-[100] py-1 text-slate-700 dark:text-slate-200 font-semibold text-[11px] animate-fadeIn">
                             <button @click="triggerNewProject" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
                                 <span>➕</span> Proyek Baru (Reset)
                             </button>
-                            <button @click="triggerSaveProject" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
-                                <span>💾</span> Simpan Proyek (Save)
-                            </button>
-                            <button @click="triggerSaveProjectAs" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
-                                <span>📝</span> Simpan Sebagai... (Save As)
-                            </button>
                             <button @click="showOpenProjectModal = true; showFileMenu = false" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
-                                <span>📂</span> Buka Proyek (Open)
+                                <span>📂</span> Buka Proyek (Browser)
+                            </button>
+                            <button @click="triggerOpenJsonFile" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                                <span>💻</span> Buka File Proyek (.json)
+                            </button>
+                            <hr class="border-slate-100 dark:border-slate-800/60 my-1">
+                            <button @click="triggerSaveProject" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                                <span>💾</span> Simpan Proyek (Browser)
+                            </button>
+                            <button @click="triggerSaveJsonFile" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
+                                <span>💾</span> Simpan File Proyek (.json)
                             </button>
                             <hr class="border-slate-100 dark:border-slate-800/60 my-1">
                             <button @click="exportToExcel(); showFileMenu = false" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-all cursor-pointer">
@@ -874,6 +878,9 @@
                 </div>
             </div>
 
+            <!-- Hidden input for file upload -->
+            <input type="file" id="importJsonInput" accept=".json" @change="handleJsonFileImport" class="hidden" style="display:none">
+
         </div>
 
     </div>
@@ -1270,6 +1277,87 @@
                     this.$nextTick(() => {
                         window.print();
                     });
+                },
+                triggerOpenJsonFile() {
+                    this.showFileMenu = false;
+                    document.getElementById('importJsonInput').click();
+                },
+                handleJsonFileImport(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const parsed = JSON.parse(e.target.result);
+                            if (parsed && parsed.project && parsed.items && parsed.approval) {
+                                if (confirm(`Apakah Anda yakin ingin memuat proyek "${parsed.project.name || 'dari file'}"? Data saat ini akan diganti.`)) {
+                                    this.project = parsed.project;
+                                    this.items = parsed.items;
+                                    this.approval = parsed.approval;
+                                    if (parsed.laborRatePerHour) {
+                                        this.laborRatePerHour = parsed.laborRatePerHour;
+                                    }
+                                    this.currentProjectId = parsed.currentProjectId || null;
+                                    alert("✅ Berhasil memuat proyek dari file JSON!");
+                                }
+                            } else {
+                                alert("❌ Format file JSON proyek tidak valid.");
+                            }
+                        } catch (err) {
+                            alert("❌ Gagal membaca file JSON.");
+                        }
+                        event.target.value = '';
+                    };
+                    reader.readAsText(file);
+                },
+                async triggerSaveJsonFile() {
+                    this.showFileMenu = false;
+                    const projectName = this.project.name || 'proyek';
+                    const cleanName = projectName.replace(/[^a-zA-Z0-9]/g, "_");
+                    const suggestedName = `Actual_Cost_${cleanName}.json`;
+                    
+                    const saveData = {
+                        project: this.project,
+                        items: this.items,
+                        approval: this.approval,
+                        laborRatePerHour: this.laborRatePerHour,
+                        currentProjectId: this.currentProjectId
+                    };
+
+                    await this.saveJsonFile(saveData, suggestedName);
+                },
+                async saveJsonFile(data, suggestedName) {
+                    if (window.showSaveFilePicker) {
+                        try {
+                            const handle = await window.showSaveFilePicker({
+                                suggestedName: suggestedName,
+                                types: [{
+                                    description: 'JSON File',
+                                    accept: { 'application/json': ['.json'] }
+                                }]
+                            });
+                            const writable = await handle.createWritable();
+                            await writable.write(JSON.stringify(data, null, 2));
+                            await writable.close();
+                            return true;
+                        } catch (err) {
+                            if (err.name === 'AbortError') return false;
+                            console.warn("showSaveFilePicker failed, falling back to Blob download:", err);
+                        }
+                    }
+                    
+                    // Fallback to standard Blob download
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = suggestedName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    return true;
                 },
                 selectMachineTemplate(event, row) {
                     const selectedName = event.target.value;
