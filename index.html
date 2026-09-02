@@ -629,7 +629,7 @@
                                                 s.nama_material }}</span>
                                             <span
                                                 class="text-blue-600 dark:text-blue-400 font-mono mt-0.5 text-[9px]">MID:
-                                                {{ s.mid }} | Rp{{ formatNumber(s.last_purchase) }}</span>
+                                                {{ s.mid }} <span v-if="s.satuan">| Satuan: {{ s.satuan }}</span> | Rp{{ formatPrice(s.last_purchase) }}</span>
                                         </div>
                                     </div>
                                 </td>
@@ -646,7 +646,7 @@
                                     <input v-model="row.matUnit" class="table-input text-center" placeholder="Satuan">
                                 </td>
                                 <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
-                                    <input type="number" v-model.number="row.matPrice" class="table-input text-right">
+                                    <input type="number" step="any" v-model.number="row.matPrice" class="table-input text-right">
                                 </td>
                                 <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
                                     <input type="number" step="0.1" v-model.number="row.rfH"
@@ -1093,6 +1093,11 @@
                 formatNumber(val) {
                     return Math.round(val || 0).toLocaleString('id-ID');
                 },
+                formatPrice(val) {
+                    if (val === undefined || val === null || isNaN(val)) return '0';
+                    const num = Number(val);
+                    return num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                },
                 login() {
                     if (this.loginUsername === 'admin' && this.loginPassword === 'admin123') {
                         this.isLoggedIn = true;
@@ -1284,7 +1289,9 @@
                 selectMaterial(row, item) {
                     row.matName = item.nama_material;
                     row.supplier = item.mid;
-                    row.matPrice = item.last_purchase;
+                    row.matUnit = item.satuan || '';
+                    const price = typeof item.last_purchase === 'number' ? item.last_purchase : parseFloat(item.last_purchase) || 0;
+                    row.matPrice = Math.round(price * 100) / 100;
                     row.suggestions = [];
                     row.showSuggestions = false;
                 },
@@ -1675,20 +1682,28 @@
                     this.darkMode = true;
                     document.documentElement.classList.add('dark');
                 }
-                // Auto-load master_mid (8).json
-                fetch('master_mid (8).json')
-                    .then(res => {
-                        if (!res.ok) throw new Error("Fetch failed");
-                        return res.json();
-                    })
-                    .then(data => {
-                        this.masterMidList = data;
-                        this.midFileLoaded = true;
-                        console.log("Master MID loaded automatically:", data.length, "items");
-                    })
-                    .catch(err => {
-                        console.warn("Auto-load master_mid (8).json failed (CORS block on file:// protocol). Use manual import button.");
-                    });
+                // Auto-load master_mid json
+                const candidateFiles = ['master_mid (10).json', 'master_mid.json', 'master_mid (8).json'];
+                const tryLoadJson = (index = 0) => {
+                    if (index >= candidateFiles.length) {
+                        console.warn("Auto-load master_mid json failed (CORS block on file:// protocol). Use manual import button.");
+                        return;
+                    }
+                    fetch(candidateFiles[index])
+                        .then(res => {
+                            if (!res.ok) throw new Error("Fetch failed");
+                            return res.json();
+                        })
+                        .then(data => {
+                            this.masterMidList = data;
+                            this.midFileLoaded = true;
+                            console.log(`Master MID loaded automatically (${candidateFiles[index]}):`, data.length, "items");
+                        })
+                        .catch(() => {
+                            tryLoadJson(index + 1);
+                        });
+                };
+                tryLoadJson();
             }
         }).mount('#app');
     </script>
