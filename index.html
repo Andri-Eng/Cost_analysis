@@ -510,7 +510,7 @@
                             <th rowspan="2"
                                 class="p-2 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[120px]">
                                 Detail Informasi</th>
-                            <th colspan="5"
+                            <th colspan="6"
                                 class="p-2 border border-slate-300 dark:border-slate-800 bg-emerald-50 dark:bg-emerald-950/40 print:bg-[#c6e0b4] print:border-gray-400">
                                 Material</th>
                             <th rowspan="2"
@@ -574,6 +574,8 @@
                             <th
                                 class="p-1 border border-slate-300 dark:border-slate-800 print:border-gray-400 min-w-[90px]">
                                 Harga Satuan</th>
+                            <th class="p-1 border border-slate-300 dark:border-slate-800 print:border-gray-400 w-14">
+                                RF.H</th>
                         </tr>
                     </thead>
 
@@ -645,6 +647,10 @@
                                 </td>
                                 <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
                                     <input type="number" v-model.number="row.matPrice" class="table-input text-right">
+                                </td>
+                                <td class="p-1 border border-slate-200 dark:border-slate-800 print:border-gray-400">
+                                    <input type="number" step="0.1" v-model.number="row.rfH"
+                                        class="table-input text-center">
                                 </td>
 
                                 <!-- Manpower & Duration Columns -->
@@ -735,7 +741,7 @@
                     <tfoot>
                         <tr
                             class="bg-slate-50 dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 font-bold text-xs">
-                            <td colspan="17"
+                            <td colspan="18"
                                 class="p-2 text-right border border-slate-300 dark:border-slate-850 print:border-gray-400">
                                 Total:</td>
                             <td
@@ -938,6 +944,7 @@
                                     matUnit: 'mm2',
                                     matName: 'PLAT A-36 T 10 MM',
                                     matPrice: 45872,
+                                    rfH: 1.1,
                                     rfM: 1.1,
                                     manpower: 1,
                                     duration: 1,
@@ -955,6 +962,7 @@
                                     matUnit: '',
                                     matName: '',
                                     matPrice: 0,
+                                    rfH: 1.1,
                                     rfM: 1,
                                     manpower: 2,
                                     duration: 1,
@@ -1020,13 +1028,13 @@
                     return isNaN(parsed) ? 0 : parsed;
                 },
                 calcRowMaterial(row) {
-                    return this.parseAndEvaluate(row.matQty) * (row.matPrice || 0) * (row.rfM || 1);
+                    return this.parseAndEvaluate(row.matQty) * (row.matPrice || 0) * (row.rfH || 1);
                 },
                 calcRowMachine(row) {
-                    return (row.machineRatePerHour || 0) * this.parseAndEvaluate(row.duration) * (row.rfO || 1);
+                    return (row.machineRatePerHour || 0) * this.parseAndEvaluate(row.duration) * (row.rfM || 1);
                 },
                 calcRowLabor(row) {
-                    return (row.manpower || 0) * this.parseAndEvaluate(row.duration) * (this.laborRatePerHour || 0);
+                    return (row.manpower || 0) * this.parseAndEvaluate(row.duration) * (this.laborRatePerHour || 0) * (row.rfO || 1);
                 },
                 calcRowTotal(row) {
                     return this.calcRowMaterial(row) + this.calcRowMachine(row) + this.calcRowLabor(row);
@@ -1071,6 +1079,7 @@
                         matUnit: '',
                         matName: '',
                         matPrice: 0,
+                        rfH: 1.1,
                         rfM: 1,
                         manpower: 1,
                         duration: 0,
@@ -1344,25 +1353,26 @@
                         [
                             "Aktivitas",          // A
                             "Detail Informasi",   // B
-                            "Material",           // C (colspan 5, D-G blank)
+                            "Material",           // C (colspan 6, D-H blank)
                             "",                   // D
                             "",                   // E
                             "",                   // F
                             "",                   // G
-                            "Manpower",           // H
-                            "Durasi (Jam)",       // I
-                            "RF.O",               // J
-                            "RF.M",               // K
-                            "Biaya mesin/Jam",    // L
-                            "Biaya Material",     // M
-                            "Biaya Tenaga Kerja", // N
-                            "Operasional Mesin",  // O
-                            "TOTAL PER PROSES",   // P
-                            "QTY",                // Q
-                            "Jumlah Biaya Material",          // R
-                            "Jumlah Biaya Tenaga Kerja",      // S
-                            "Jumlah Biaya Operasional Mesin", // T
-                            "JUMLAH"              // U
+                            "",                   // H
+                            "Manpower",           // I
+                            "Durasi (Jam)",       // J
+                            "RF.O",               // K
+                            "RF.M",               // L
+                            "Biaya mesin/Jam",    // M
+                            "Biaya Material",     // N
+                            "Biaya Tenaga Kerja", // O
+                            "Operasional Mesin",  // P
+                            "TOTAL PER PROSES",   // Q
+                            "QTY",                // R
+                            "Jumlah Biaya Material",          // S
+                            "Jumlah Biaya Tenaga Kerja",      // T
+                            "Jumlah Biaya Operasional Mesin", // U
+                            "JUMLAH"              // V
                         ],
                         [
                             "", "", // A, B merged
@@ -1371,7 +1381,8 @@
                             "Qty",                // E
                             "Satuan",             // F
                             "Harga Satuan",       // G
-                            "", "", "", "", "", "", "", "", "", "", "", "", "", "", // H to U merged with row above
+                            "RF.H",               // H
+                            "", "", "", "", "", "", "", "", "", "", "", "", "", "", // I to V merged with row above
                         ]
                     ];
 
@@ -1398,27 +1409,28 @@
                                 E: this.parseAndEvaluate(p.matQty),
                                 F: p.matUnit || "",
                                 G: p.matPrice || 0,
-                                H: p.manpower || 0,
-                                I: this.parseAndEvaluate(p.duration),
-                                J: p.rfO || 1,
-                                K: p.rfM || 1,
-                                L: p.machineRatePerHour || 0,
-                                Q: idx === 0 ? this.parseAndEvaluate(item.qty) : ""
+                                H: p.rfH || 1.1,
+                                I: p.manpower || 0,
+                                J: this.parseAndEvaluate(p.duration),
+                                K: p.rfO || 1,
+                                L: p.rfM || 1,
+                                M: p.machineRatePerHour || 0,
+                                R: idx === 0 ? this.parseAndEvaluate(item.qty) : ""
                             };
 
                             // Tambahkan baris data
                             XLSX.utils.sheet_add_aoa(ws, [[
                                 rowData.A, rowData.B, rowData.C, rowData.D, rowData.E, rowData.F, rowData.G, rowData.H,
-                                rowData.I, rowData.J, rowData.K, rowData.L,
-                                0, // Placeholder Biaya Material (M)
-                                0, // Placeholder Biaya Tenaga Kerja (N)
-                                0, // Placeholder Operasional Mesin (O)
-                                0, // Placeholder TOTAL PER PROSES (P)
-                                rowData.Q,
-                                0, // Placeholder Jumlah Biaya Material (R)
-                                0, // Placeholder Jumlah Biaya Tenaga Kerja (S)
-                                0, // Placeholder Jumlah Biaya Operasional Mesin (T)
-                                0  // Placeholder JUMLAH (U)
+                                rowData.I, rowData.J, rowData.K, rowData.L, rowData.M,
+                                0, // Placeholder Biaya Material (N)
+                                0, // Placeholder Biaya Tenaga Kerja (O)
+                                0, // Placeholder Operasional Mesin (P)
+                                0, // Placeholder TOTAL PER PROSES (Q)
+                                rowData.R,
+                                0, // Placeholder Jumlah Biaya Material (S)
+                                0, // Placeholder Jumlah Biaya Tenaga Kerja (T)
+                                0, // Placeholder Jumlah Biaya Operasional Mesin (U)
+                                0  // Placeholder JUMLAH (V)
                             ]], { origin: `A${r}` });
 
                             // Terapkan format mata uang untuk kolom input angka harga
@@ -1426,25 +1438,25 @@
                                 if (ws[`${col}${r}`]) ws[`${col}${r}`].z = '#,##0';
                             };
                             formatInputCell('G'); // Harga Satuan
-                            formatInputCell('L'); // Biaya mesin/Jam
+                            formatInputCell('M'); // Biaya mesin/Jam
 
                             // Setel Rumus Dinamis Excel
-                            ws[`M${r}`] = { f: `E${r}*G${r}*K${r}`, z: '#,##0' };
-                            ws[`N${r}`] = { f: `H${r}*I${r}*$F$1`, z: '#,##0' };
-                            ws[`O${r}`] = { f: `I${r}*L${r}*J${r}`, z: '#,##0' };
+                            ws[`N${r}`] = { f: `E${r}*G${r}*H${r}`, z: '#,##0' };    // Biaya Material = Qty * Harga * RF.H
+                            ws[`O${r}`] = { f: `I${r}*J${r}*$F$1*K${r}`, z: '#,##0' }; // Biaya TK = Manpower * Durasi * Rate * RF.O
+                            ws[`P${r}`] = { f: `J${r}*M${r}*L${r}`, z: '#,##0' };    // Op. Mesin = Durasi * Biaya Mesin/Jam * RF.M
 
                             // Jumlah Biaya per Baris
-                            ws[`R${r}`] = { f: `M${r}*$Q$${startRow}`, z: '#,##0' };
-                            ws[`S${r}`] = { f: `N${r}*$Q$${startRow}`, z: '#,##0' };
-                            ws[`T${r}`] = { f: `O${r}*$Q$${startRow}`, z: '#,##0' };
+                            ws[`S${r}`] = { f: `N${r}*$R$${startRow}`, z: '#,##0' };
+                            ws[`T${r}`] = { f: `O${r}*$R$${startRow}`, z: '#,##0' };
+                            ws[`U${r}`] = { f: `P${r}*$R$${startRow}`, z: '#,##0' };
 
                             if (idx === 0) {
-                                ws[`P${r}`] = { f: `SUM(M${startRow}:M${endRow})+SUM(N${startRow}:N${endRow})+SUM(O${startRow}:O${endRow})`, z: '#,##0' };
-                                ws[`U${r}`] = { f: `P${startRow}*Q${startRow}`, z: '#,##0' };
+                                ws[`Q${r}`] = { f: `SUM(N${startRow}:N${endRow})+SUM(O${startRow}:O${endRow})+SUM(P${startRow}:P${endRow})`, z: '#,##0' };
+                                ws[`V${r}`] = { f: `Q${startRow}*R${startRow}`, z: '#,##0' };
                             } else {
                                 // Hapus nilai default 0 untuk baris selain baris pertama komponen
-                                delete ws[`P${r}`];
-                                delete ws[`U${r}`];
+                                delete ws[`Q${r}`];
+                                delete ws[`V${r}`];
                             }
 
                             currentRow++;
@@ -1454,9 +1466,9 @@
                         if (numProcesses > 1) {
                             if (!ws['!merges']) ws['!merges'] = [];
                             ws['!merges'].push({ s: { r: startRow - 1, c: 0 }, e: { r: endRow - 1, c: 0 } });   // Aktivitas
-                            ws['!merges'].push({ s: { r: startRow - 1, c: 15 }, e: { r: endRow - 1, c: 15 } }); // TOTAL PER PROSES
-                            ws['!merges'].push({ s: { r: startRow - 1, c: 16 }, e: { r: endRow - 1, c: 16 } }); // QTY
-                            ws['!merges'].push({ s: { r: startRow - 1, c: 20 }, e: { r: endRow - 1, c: 20 } }); // JUMLAH
+                            ws['!merges'].push({ s: { r: startRow - 1, c: 16 }, e: { r: endRow - 1, c: 16 } }); // TOTAL PER PROSES
+                            ws['!merges'].push({ s: { r: startRow - 1, c: 17 }, e: { r: endRow - 1, c: 17 } }); // QTY
+                            ws['!merges'].push({ s: { r: startRow - 1, c: 21 }, e: { r: endRow - 1, c: 21 } }); // JUMLAH
                         }
                     });
 
@@ -1464,33 +1476,33 @@
                     if (!ws['!merges']) ws['!merges'] = [];
                     ws['!merges'].push({ s: { r: 4, c: 0 }, e: { r: 5, c: 0 } }); // Aktivitas
                     ws['!merges'].push({ s: { r: 4, c: 1 }, e: { r: 5, c: 1 } }); // Detail Informasi
-                    ws['!merges'].push({ s: { r: 4, c: 2 }, e: { r: 4, c: 6 } }); // Material (Header Group)
-                    ws['!merges'].push({ s: { r: 4, c: 7 }, e: { r: 5, c: 7 } }); // Manpower
-                    ws['!merges'].push({ s: { r: 4, c: 8 }, e: { r: 5, c: 8 } }); // Durasi
-                    ws['!merges'].push({ s: { r: 4, c: 9 }, e: { r: 5, c: 9 } }); // RF.O
-                    ws['!merges'].push({ s: { r: 4, c: 10 }, e: { r: 5, c: 10 } }); // RF.M
-                    ws['!merges'].push({ s: { r: 4, c: 11 }, e: { r: 5, c: 11 } }); // Biaya mesin/Jam
-                    ws['!merges'].push({ s: { r: 4, c: 12 }, e: { r: 5, c: 12 } }); // Biaya Material
-                    ws['!merges'].push({ s: { r: 4, c: 13 }, e: { r: 5, c: 13 } }); // Biaya Tenaga Kerja
-                    ws['!merges'].push({ s: { r: 4, c: 14 }, e: { r: 5, c: 14 } }); // Operasional Mesin
-                    ws['!merges'].push({ s: { r: 4, c: 15 }, e: { r: 5, c: 15 } }); // TOTAL PER PROSES
-                    ws['!merges'].push({ s: { r: 4, c: 16 }, e: { r: 5, c: 16 } }); // QTY
-                    ws['!merges'].push({ s: { r: 4, c: 17 }, e: { r: 5, c: 17 } }); // Jumlah Biaya Material
-                    ws['!merges'].push({ s: { r: 4, c: 18 }, e: { r: 5, c: 18 } }); // Jumlah Biaya Tenaga Kerja
-                    ws['!merges'].push({ s: { r: 4, c: 19 }, e: { r: 5, c: 19 } }); // Jumlah Biaya Operasional Mesin
-                    ws['!merges'].push({ s: { r: 4, c: 20 }, e: { r: 5, c: 20 } }); // JUMLAH
+                    ws['!merges'].push({ s: { r: 4, c: 2 }, e: { r: 4, c: 7 } }); // Material (Header Group, 6 cols)
+                    ws['!merges'].push({ s: { r: 4, c: 8 }, e: { r: 5, c: 8 } }); // Manpower
+                    ws['!merges'].push({ s: { r: 4, c: 9 }, e: { r: 5, c: 9 } }); // Durasi
+                    ws['!merges'].push({ s: { r: 4, c: 10 }, e: { r: 5, c: 10 } }); // RF.O
+                    ws['!merges'].push({ s: { r: 4, c: 11 }, e: { r: 5, c: 11 } }); // RF.M
+                    ws['!merges'].push({ s: { r: 4, c: 12 }, e: { r: 5, c: 12 } }); // Biaya mesin/Jam
+                    ws['!merges'].push({ s: { r: 4, c: 13 }, e: { r: 5, c: 13 } }); // Biaya Material
+                    ws['!merges'].push({ s: { r: 4, c: 14 }, e: { r: 5, c: 14 } }); // Biaya Tenaga Kerja
+                    ws['!merges'].push({ s: { r: 4, c: 15 }, e: { r: 5, c: 15 } }); // Operasional Mesin
+                    ws['!merges'].push({ s: { r: 4, c: 16 }, e: { r: 5, c: 16 } }); // TOTAL PER PROSES
+                    ws['!merges'].push({ s: { r: 4, c: 17 }, e: { r: 5, c: 17 } }); // QTY
+                    ws['!merges'].push({ s: { r: 4, c: 18 }, e: { r: 5, c: 18 } }); // Jumlah Biaya Material
+                    ws['!merges'].push({ s: { r: 4, c: 19 }, e: { r: 5, c: 19 } }); // Jumlah Biaya Tenaga Kerja
+                    ws['!merges'].push({ s: { r: 4, c: 20 }, e: { r: 5, c: 20 } }); // Jumlah Biaya Operasional Mesin
+                    ws['!merges'].push({ s: { r: 4, c: 21 }, e: { r: 5, c: 21 } }); // JUMLAH
 
                     // Baris Total di bagian bawah
                     const totalRow = currentRow;
                     XLSX.utils.sheet_add_aoa(ws, [[
-                        "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 0, 0, 0, 0
+                        "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 0, 0, 0, 0
                     ]], { origin: `A${totalRow}` });
 
                     // Rumus Total bawah
-                    ws[`R${totalRow}`] = { f: `SUM(R7:R${totalRow - 1})`, z: '#,##0' };
                     ws[`S${totalRow}`] = { f: `SUM(S7:S${totalRow - 1})`, z: '#,##0' };
                     ws[`T${totalRow}`] = { f: `SUM(T7:T${totalRow - 1})`, z: '#,##0' };
                     ws[`U${totalRow}`] = { f: `SUM(U7:U${totalRow - 1})`, z: '#,##0' };
+                    ws[`V${totalRow}`] = { f: `SUM(V7:V${totalRow - 1})`, z: '#,##0' };
 
                     // Atur Lebar Kolom
                     ws['!cols'] = [
@@ -1501,20 +1513,21 @@
                         { wch: 8 },  // E: Qty
                         { wch: 8 },  // F: Satuan
                         { wch: 15 }, // G: Harga Satuan
-                        { wch: 10 }, // H: Manpower
-                        { wch: 12 }, // I: Durasi (Jam)
-                        { wch: 6 },  // J: RF.O
-                        { wch: 6 },  // K: RF.M
-                        { wch: 18 }, // L: Biaya mesin/Jam
-                        { wch: 16 }, // M: Biaya Material
-                        { wch: 18 }, // N: Biaya Tenaga Kerja
-                        { wch: 18 }, // O: Operasional Mesin
-                        { wch: 20 }, // P: TOTAL PER PROSES
-                        { wch: 8 },  // Q: QTY
-                        { wch: 20 }, // R: Jumlah Biaya Material
-                        { wch: 22 }, // S: Jumlah Biaya Tenaga Kerja
-                        { wch: 26 }, // T: Jumlah Biaya Operasional Mesin
-                        { wch: 20 }  // U: JUMLAH
+                        { wch: 6 },  // H: RF.H
+                        { wch: 10 }, // I: Manpower
+                        { wch: 12 }, // J: Durasi (Jam)
+                        { wch: 6 },  // K: RF.O
+                        { wch: 6 },  // L: RF.M
+                        { wch: 18 }, // M: Biaya mesin/Jam
+                        { wch: 16 }, // N: Biaya Material
+                        { wch: 18 }, // O: Biaya Tenaga Kerja
+                        { wch: 18 }, // P: Operasional Mesin
+                        { wch: 20 }, // Q: TOTAL PER PROSES
+                        { wch: 8 },  // R: QTY
+                        { wch: 20 }, // S: Jumlah Biaya Material
+                        { wch: 22 }, // T: Jumlah Biaya Tenaga Kerja
+                        { wch: 26 }, // U: Jumlah Biaya Operasional Mesin
+                        { wch: 20 }  // V: JUMLAH
                     ];
 
                     // Masukkan ke workbook
