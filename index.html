@@ -1332,7 +1332,7 @@
                         });
                     });
                 },
-                exportToExcel() {
+                async exportToExcel() {
                     // Buat workbook & worksheet baru
                     const wb = XLSX.utils.book_new();
 
@@ -1522,7 +1522,31 @@
 
                     // Tentukan nama berkas
                     const fileNameClean = (this.project.name || "cost_analysis").replace(/[^a-zA-Z0-9]/g, "_");
-                    XLSX.writeFile(wb, `Actual_Cost_${fileNameClean}.xlsx`);
+                    const suggestedName = `Actual_Cost_${fileNameClean}.xlsx`;
+
+                    // Gunakan showSaveFilePicker agar user bisa pilih lokasi simpan
+                    if (window.showSaveFilePicker) {
+                        try {
+                            const handle = await window.showSaveFilePicker({
+                                suggestedName: suggestedName,
+                                types: [{
+                                    description: 'Excel File',
+                                    accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+                                }]
+                            });
+                            const writable = await handle.createWritable();
+                            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                            await writable.write(new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+                            await writable.close();
+                            return;
+                        } catch (err) {
+                            if (err.name === 'AbortError') return;
+                            console.warn("showSaveFilePicker failed, falling back to auto-download:", err);
+                        }
+                    }
+
+                    // Fallback: auto-download jika browser tidak mendukung showSaveFilePicker
+                    XLSX.writeFile(wb, suggestedName);
                 }
             },
             watch: {
