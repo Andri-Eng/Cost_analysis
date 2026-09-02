@@ -629,7 +629,7 @@
                                                 s.nama_material }}</span>
                                             <span
                                                 class="text-blue-600 dark:text-blue-400 font-mono mt-0.5 text-[9px]">MID:
-                                                {{ s.mid }} <span v-if="s.satuan">| Satuan: {{ s.satuan }}</span> | Rp{{ formatPrice(s.last_purchase) }}</span>
+                                                {{ s.mid }} <span v-if="s.satuan || s.uom">| Satuan: {{ s.satuan || s.uom }}</span> | Rp{{ formatPrice(s.last_purchase) }}</span>
                                         </div>
                                     </div>
                                 </td>
@@ -1289,7 +1289,7 @@
                 selectMaterial(row, item) {
                     row.matName = item.nama_material;
                     row.supplier = item.mid;
-                    row.matUnit = item.satuan || '';
+                    row.matUnit = item.satuan || item.uom || item.unit || '';
                     const price = typeof item.last_purchase === 'number' ? item.last_purchase : parseFloat(item.last_purchase) || 0;
                     row.matPrice = Math.round(price * 100) / 100;
                     row.suggestions = [];
